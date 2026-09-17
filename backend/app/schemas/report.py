@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 from datetime import datetime
 from typing import Optional, List
 
@@ -22,9 +22,21 @@ class ReportResponse(BaseModel):
     area: Optional[str]
     description: Optional[str]
     status: str
+    verified_at: Optional[datetime] = None
+    verified_by_id: Optional[int] = None
     created_at: datetime
     updated_at: datetime
     reporter_name: Optional[str] = None
+
+    @computed_field
+    @property
+    def verified(self) -> bool:
+        return self.verified_at is not None or self.status in ["Verified", "In Progress", "Resolved"]
+
+    @computed_field
+    @property
+    def eligible_for_token(self) -> bool:
+        return self.verified
 
     class Config:
         from_attributes = True
