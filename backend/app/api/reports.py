@@ -1,13 +1,21 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Optional
+import os
 from app.db.session import get_db
 from app.services.auth_service import get_current_user
 from app.services.report_service import ReportService
 from app.schemas.report import ReportResponse, ReportListResponse, StatusUpdateRequest, StatusHistoryResponse
 from app.models.user import User
+from app.core.locations import CAMPUS_LOCATIONS
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
+
+
+@router.get("/locations")
+def get_locations():
+    """Return pre-defined campus locations list."""
+    return CAMPUS_LOCATIONS
 
 
 @router.post("", response_model=ReportResponse)
@@ -17,22 +25,34 @@ def create_report(
     floor: Optional[str] = Form(None),
     area: Optional[str] = Form(None),
     description: Optional[str] = Form(None),
-    photo: UploadFile = File(...),
+    photo: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    import os
+    if not location or not location.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Both a photo and a location are required to submit a report"
+        )
+    if not photo or not photo.filename or not photo.filename.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Both a photo and a location are required to submit a report"
+        )
+
     upload_dir = os.path.join(os.path.dirname(__file__), "..", "..", "uploads")
     os.makedirs(upload_dir, exist_ok=True)
     file_path = os.path.join(upload_dir, photo.filename)
     with open(file_path, "wb") as f:
         f.write(photo.file.read())
 
+    rel_photo_path = f"uploads/{photo.filename}"
+
     service = ReportService(db)
     report = service.create_report(
         reporter_id=current_user.id,
-        photo_path=file_path,
-        location=location,
+        photo_path=rel_photo_path,
+        location=location.strip(),
         building=building,
         floor=floor,
         area=area,

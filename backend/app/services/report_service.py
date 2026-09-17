@@ -16,26 +16,26 @@ class ReportService:
     def create_report(self, reporter_id: int, photo_path: str, location: str,
                       building: str = None, floor: str = None, area: str = None,
                       description: str = None) -> Report:
-        if not photo_path:
+        if not photo_path or not str(photo_path).strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Photo is required before submission"
+                detail="Both a photo and a location are required to submit a report"
             )
-        if not location:
+        if not location or not str(location).strip():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Location is required before submission"
+                detail="Both a photo and a location are required to submit a report"
             )
 
         report = Report(
             reporter_id=reporter_id,
             photo_path=photo_path,
-            location=location,
+            location=location.strip(),
             building=building,
             floor=floor,
             area=area,
             description=description,
-            status="Submitted",
+            status="Reported",
         )
         return self.report_repo.create(report)
 
@@ -50,7 +50,7 @@ class ReportService:
 
     def update_status(self, report_id: int, new_status: str, changed_by_id: int,
                       reason: str = None) -> Report:
-        valid_statuses = ["Submitted", "Verified", "In Progress", "Resolved", "Rejected"]
+        valid_statuses = ["Reported", "Submitted", "Verified", "In Progress", "Resolved", "Rejected"]
         if new_status not in valid_statuses:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
