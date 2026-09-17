@@ -48,8 +48,37 @@ class ReportService:
     def list_reports(self, status_filter: str = None, reporter_id: int = None) -> list[Report]:
         return self.report_repo.get_all(status=status_filter, reporter_id=reporter_id)
 
+    def verify_report(self, report_id: int, staff_id: int, reason: str = None) -> Report:
+        from datetime import datetime
+        report = self.get_report(report_id)
+        if report.status in ["Verified", "In Progress", "Resolved"]:
+            if not report.verified_at:
+                report.verified_at = datetime.utcnow()
+                report.verified_by_id = staff_id
+                self.report_repo.update(report)
+            return report
+
+        old_status = report.status
+        report.status = "Verified"
+        report.verified_at = datetime.utcnow()
+        report.verified_by_id = staff_id
+
+        history = ReportStatusHistory(
+            report_id=report_id,
+            from_status=old_status,
+            to_status="Verified",
+            changed_by_id=staff_id,
+            reason=reason or "Report verified by maintenance staff",
+        )
+        self.report_repo.add_status_history(history)
+        self.report_repo.update(report)
+
+        self.token_service.award_tokens(report.reporter_id, report_id)
+        return report
+
     def update_status(self, report_id: int, new_status: str, changed_by_id: int,
                       reason: str = None) -> Report:
+        from datetime import datetime
         valid_statuses = ["Reported", "Submitted", "Verified", "In Progress", "Resolved", "Rejected"]
         if new_status not in valid_statuses:
             raise HTTPException(
@@ -59,6 +88,19 @@ class ReportService:
 
         report = self.get_report(report_id)
         old_status = report.status
+
+        # Business Rule 5: A report can only reach Resolved or In Progress after passing through Verified
+        if new_status in ["In Progress", "Resolved"]:
+            is_verified = (report.verified_at is not None) or (old_status in ["Verified", "In Progress", "Resolved"])
+            if not is_verified:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="A report cannot reach In Progress or Resolved without being Verified first."
+                )
+
+        if new_status == "Verified":
+            report.verified_at = datetime.utcnow()
+            report.verified_by_id = changed_by_id
 
         history = ReportStatusHistory(
             report_id=report_id,

@@ -82,6 +82,21 @@ def get_report(report_id: int, db: Session = Depends(get_db), current_user: User
     return ReportResponse.model_validate(report)
 
 
+@router.patch("/{report_id}/verify", response_model=ReportResponse)
+def verify_report(
+    report_id: int,
+    request: Optional[StatusUpdateRequest] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role not in ["maintenance", "admin"]:
+        raise HTTPException(status_code=403, detail="Only maintenance staff can verify reports")
+    reason = request.reason if request else None
+    service = ReportService(db)
+    report = service.verify_report(report_id, current_user.id, reason)
+    return ReportResponse.model_validate(report)
+
+
 @router.patch("/{report_id}/status", response_model=ReportResponse)
 def update_status(
     report_id: int,
@@ -90,7 +105,6 @@ def update_status(
     current_user: User = Depends(get_current_user),
 ):
     if current_user.role not in ["maintenance", "admin"]:
-        from fastapi import HTTPException
         raise HTTPException(status_code=403, detail="Only maintenance team can update status")
     service = ReportService(db)
     report = service.update_status(report_id, request.status, current_user.id, request.reason)
