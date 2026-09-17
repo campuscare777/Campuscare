@@ -16,6 +16,20 @@ class Base(DeclarativeBase):
     pass
 
 
+def init_db():
+    from sqlalchemy import inspect, text
+    Base.metadata.create_all(bind=engine)
+    with engine.connect() as conn:
+        inspector = inspect(engine)
+        if "reports" in inspector.get_table_names():
+            columns = [c["name"] for c in inspector.get_columns("reports")]
+            if "verified_at" not in columns:
+                conn.execute(text("ALTER TABLE reports ADD COLUMN verified_at DATETIME"))
+            if "verified_by_id" not in columns:
+                conn.execute(text("ALTER TABLE reports ADD COLUMN verified_by_id INTEGER REFERENCES users(id)"))
+            conn.commit()
+
+
 def get_db():
     db = SessionLocal()
     try:

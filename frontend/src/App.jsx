@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { authAPI, reportsAPI, tokensAPI, rewardsAPI, dashboardAPI } from './api';
 import { useEffect } from 'react';
 import MaintenanceReportForm from './MaintenanceReportForm';
+import StaffReportsQueue from './StaffReportsQueue';
 
 function LoginPage() {
   const { login, loading } = useAuth();
@@ -246,26 +247,17 @@ function ReportsPage() {
 
   const isMaintenance = user?.role === 'maintenance' || user?.role === 'admin';
 
+  if (isMaintenance) {
+    return <StaffReportsQueue onReportUpdated={loadReports} />;
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h2 style={{ color: 'white', fontSize: 22, fontWeight: 700, margin: 0 }}>Reports</h2>
-        <div style={{ display: 'flex', gap: 10 }}>
-          {isMaintenance && (
-            <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: 'white', fontSize: 13 }}>
-              <option value="">All Statuses</option>
-              <option value="Reported">Reported</option>
-              <option value="Submitted">Submitted</option>
-              <option value="Verified">Verified</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Resolved">Resolved</option>
-              <option value="Rejected">Rejected</option>
-            </select>
-          )}
-          <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-            <Upload size={14} /> New Report
-          </button>
-        </div>
+        <h2 style={{ color: 'white', fontSize: 22, fontWeight: 700, margin: 0 }}>My Reports</h2>
+        <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          <Upload size={14} /> New Report
+        </button>
       </div>
 
       {showForm && (

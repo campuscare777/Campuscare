@@ -3,8 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 
-from app.db.session import engine, Base
+from app.db.session import engine, Base, init_db
 from app.api import auth, reports, tokens, dashboard
+
+init_db()
 
 app = FastAPI(title="Campus Maintenance Reporting", version="1.0.0")
 

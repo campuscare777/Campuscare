@@ -36,6 +36,7 @@ export const reportsAPI = {
   getLocations: () => api.get('/reports/locations'),
   get: (id) => api.get(`/reports/${id}`),
   create: (formData) => api.post('/reports', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  verify: (id, reason) => api.patch(`/reports/${id}/verify`, { reason }),
   updateStatus: (id, status, reason) => api.patch(`/reports/${id}/status`, { status, reason }),
   getHistory: (id) => api.get(`/reports/${id}/history`),
 };
