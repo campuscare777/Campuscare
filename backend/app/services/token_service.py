@@ -13,6 +13,10 @@ class TokenAwardService:
         self.token_repo = TokenRepository(db)
 
     def award_tokens(self, student_id: int, report_id: int) -> TokenTransaction:
+        existing_tx = self.token_repo.get_award_transaction_for_report(report_id)
+        if existing_tx:
+            return existing_tx
+
         balance = self.token_repo.get_or_create_balance(student_id)
         amount = settings.TOKEN_AWARD_AMOUNT
         balance.balance += amount

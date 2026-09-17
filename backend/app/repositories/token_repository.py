@@ -35,6 +35,12 @@ class TokenRepository:
             TokenTransaction.student_id == student_id
         ).order_by(TokenTransaction.created_at.desc()).all()
 
+    def get_award_transaction_for_report(self, report_id: int) -> TokenTransaction | None:
+        return self.db.query(TokenTransaction).filter(
+            TokenTransaction.related_report_id == report_id,
+            TokenTransaction.transaction_type == "award"
+        ).first()
+
     def total_awarded(self) -> int:
         result = self.db.query(func.sum(TokenTransaction.amount)).filter(
             TokenTransaction.transaction_type == "award"
