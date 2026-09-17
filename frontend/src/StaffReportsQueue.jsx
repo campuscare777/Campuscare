@@ -35,7 +35,13 @@ export default function StaffReportsQueue({ onReportUpdated }) {
     setActionLoading(reportId);
     setErrorMessage('');
     try {
-      const res = await reportsAPI.verify(reportId, reasonInput || 'Report verified by maintenance staff');
+      let res;
+      try {
+        res = await reportsAPI.verify(reportId, reasonInput || 'Report verified by maintenance staff');
+      } catch (e1) {
+        // Fallback to updateStatus with 'Verified' status
+        res = await reportsAPI.updateStatus(reportId, 'Verified', reasonInput || 'Report verified by maintenance staff');
+      }
       setReasonInput('');
       loadReports();
       if (selectedReport && selectedReport.id === reportId) {

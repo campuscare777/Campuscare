@@ -5,7 +5,7 @@ import os
 from app.db.session import get_db
 from app.services.auth_service import get_current_user
 from app.services.report_service import ReportService
-from app.schemas.report import ReportResponse, ReportListResponse, StatusUpdateRequest, StatusHistoryResponse
+from app.schemas.report import ReportResponse, ReportListResponse, StatusUpdateRequest, StatusHistoryResponse, VerifyRequest
 from app.models.user import User
 from app.core.locations import CAMPUS_LOCATIONS
 
@@ -85,7 +85,7 @@ def get_report(report_id: int, db: Session = Depends(get_db), current_user: User
 @router.patch("/{report_id}/verify", response_model=ReportResponse)
 def verify_report(
     report_id: int,
-    request: Optional[StatusUpdateRequest] = None,
+    request: Optional[VerifyRequest] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

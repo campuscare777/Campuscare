@@ -43,7 +43,11 @@ class ReportResponse(BaseModel):
 
 
 class StatusUpdateRequest(BaseModel):
-    status: str
+    status: Optional[str] = None
+    reason: Optional[str] = None
+
+
+class VerifyRequest(BaseModel):
     reason: Optional[str] = None
 
 
