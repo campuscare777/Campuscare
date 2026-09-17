@@ -4,6 +4,7 @@ import { LayoutDashboard, FileText, Coins, BarChart3, Settings, LogOut, Users, M
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 import { authAPI, reportsAPI, tokensAPI, rewardsAPI, dashboardAPI } from './api';
 import { useEffect } from 'react';
+import MaintenanceReportForm from './MaintenanceReportForm';
 
 function LoginPage() {
   const { login, loading } = useAuth();
@@ -241,7 +242,7 @@ function ReportsPage() {
     }
   };
 
-  const statusColor = (s) => ({ Submitted: '#3b82f6', Verified: '#a855f7', 'In Progress': '#eab308', Resolved: '#22c55e', Rejected: '#ef4444' }[s] || '#64748b');
+  const statusColor = (s) => ({ Reported: '#3b82f6', Submitted: '#3b82f6', Verified: '#a855f7', 'In Progress': '#eab308', Resolved: '#22c55e', Rejected: '#ef4444' }[s] || '#64748b');
 
   const isMaintenance = user?.role === 'maintenance' || user?.role === 'admin';
 
@@ -253,6 +254,7 @@ function ReportsPage() {
           {isMaintenance && (
             <select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: 'white', fontSize: 13 }}>
               <option value="">All Statuses</option>
+              <option value="Reported">Reported</option>
               <option value="Submitted">Submitted</option>
               <option value="Verified">Verified</option>
               <option value="In Progress">In Progress</option>
@@ -267,44 +269,10 @@ function ReportsPage() {
       </div>
 
       {showForm && (
-        <div style={{ background: '#1e293b', borderRadius: 12, padding: 24, border: '1px solid #334155', marginBottom: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <h3 style={{ color: 'white', fontSize: 16, fontWeight: 600, margin: 0 }}>Submit New Report</h3>
-            <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}><X size={18} /></button>
-          </div>
-          <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-              <div>
-                <label style={{ color: '#94a3b8', fontSize: 12, display: 'block', marginBottom: 4 }}>Photo *</label>
-                <input type="file" accept="image/*" onChange={(e) => setFormData({ ...formData, photo: e.target.files[0] })} style={{ color: '#94a3b8', fontSize: 13 }} />
-              </div>
-              <div>
-                <label style={{ color: '#94a3b8', fontSize: 12, display: 'block', marginBottom: 4 }}>Location *</label>
-                <input value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="e.g. Block A, Ground Floor" style={{ width: '100%', padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 6, color: 'white', fontSize: 13, boxSizing: 'border-box' }} />
-              </div>
-              <div>
-                <label style={{ color: '#94a3b8', fontSize: 12, display: 'block', marginBottom: 4 }}>Building</label>
-                <input value={formData.building} onChange={(e) => setFormData({ ...formData, building: e.target.value })} placeholder="e.g. Block A" style={{ width: '100%', padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 6, color: 'white', fontSize: 13, boxSizing: 'border-box' }} />
-              </div>
-              <div>
-                <label style={{ color: '#94a3b8', fontSize: 12, display: 'block', marginBottom: 4 }}>Floor</label>
-                <input value={formData.floor} onChange={(e) => setFormData({ ...formData, floor: e.target.value })} placeholder="e.g. Ground, 1st, 2nd" style={{ width: '100%', padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 6, color: 'white', fontSize: 13, boxSizing: 'border-box' }} />
-              </div>
-              <div>
-                <label style={{ color: '#94a3b8', fontSize: 12, display: 'block', marginBottom: 4 }}>Area</label>
-                <input value={formData.area} onChange={(e) => setFormData({ ...formData, area: e.target.value })} placeholder="e.g. Corridor, Washroom" style={{ width: '100%', padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 6, color: 'white', fontSize: 13, boxSizing: 'border-box' }} />
-              </div>
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ color: '#94a3b8', fontSize: 12, display: 'block', marginBottom: 4 }}>Description</label>
-                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Describe the issue..." rows={3} style={{ width: '100%', padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 6, color: 'white', fontSize: 13, resize: 'vertical', boxSizing: 'border-box' }} />
-              </div>
-            </div>
-            {!formData.photo && <p style={{ color: '#ef4444', fontSize: 12, marginBottom: 12 }}>Photo is required before submission</p>}
-            <button type="submit" disabled={submitting || !formData.photo || !formData.location} style={{ padding: '10px 24px', background: submitting || !formData.photo || !formData.location ? '#334155' : 'linear-gradient(135deg, #22c55e, #16a34a)', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: submitting || !formData.photo || !formData.location ? 'not-allowed' : 'pointer' }}>
-              {submitting ? 'Submitting...' : 'Submit Report'}
-            </button>
-          </form>
-        </div>
+        <MaintenanceReportForm
+          onCancel={() => setShowForm(false)}
+          onSuccess={() => loadReports()}
+        />
       )}
 
       {selectedReport && (

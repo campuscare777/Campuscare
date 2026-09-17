@@ -33,6 +33,7 @@ export const authAPI = {
 
 export const reportsAPI = {
   list: (status) => api.get('/reports', { params: status ? { status } : {} }),
+  getLocations: () => api.get('/reports/locations'),
   get: (id) => api.get(`/reports/${id}`),
   create: (formData) => api.post('/reports', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   updateStatus: (id, status, reason) => api.patch(`/reports/${id}/status`, { status, reason }),
