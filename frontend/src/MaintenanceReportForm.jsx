@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Upload, MapPin, Building, Layers, AlertCircle, CheckCircle, X, Send, FileText, ArrowLeft } from 'lucide-react';
+import { Upload, MapPin, Building, Layers, AlertCircle, CheckCircle, X, Send, FileText, ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import { reportsAPI } from './api';
 
 const DEFAULT_LOCATIONS = [
@@ -65,7 +65,6 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
     e.preventDefault();
     setErrorMessage('');
 
-    // Business Rule 4: Validation - cannot submit unless both photo and location are present
     if (!formData.photo || !formData.location.trim()) {
       setErrorMessage('Both a photo and a location are required to submit a maintenance report.');
       return;
@@ -101,62 +100,52 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
 
   if (confirmedReport) {
     return (
-      <div style={{ background: '#1e293b', borderRadius: 12, padding: 28, border: '1px solid #334155', maxWidth: 640, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-            <CheckCircle size={32} color="#22c55e" />
-          </div>
-          <h3 style={{ color: 'white', fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>Report Submitted Successfully!</h3>
-          <p style={{ color: '#94a3b8', fontSize: 14, margin: 0 }}>Your trackable maintenance issue report has been registered in the system.</p>
+      <div className="glass-card" style={{ maxWidth: 640, margin: '0 auto 28px', padding: 36, textAlign: 'center' }}>
+        <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#ecfdf5', border: '1px solid #a7f3d0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+          <CheckCircle size={36} color="#059669" />
         </div>
+        <h3 style={{ color: 'var(--text-main)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Report Submitted Successfully!</h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 24px' }}>Your maintenance issue report has been registered and sent for verification.</p>
 
-        <div style={{ background: '#0f172a', borderRadius: 10, padding: 20, border: '1px solid #334155', marginBottom: 24 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 12, marginBottom: 12, borderBottom: '1px solid #1e293b' }}>
-            <span style={{ color: '#94a3b8', fontSize: 13 }}>Report Tracking ID</span>
-            <span style={{ color: '#22c55e', fontSize: 18, fontWeight: 700 }}>#{confirmedReport.id}</span>
+        <div style={{ background: '#f8fafc', borderRadius: 16, padding: 24, border: '1px solid #e2e8f0', marginBottom: 28, textAlign: 'left' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid #e2e8f0' }}>
+            <span style={{ color: 'var(--text-subtle)', fontSize: 13, fontWeight: 600 }}>Tracking ID</span>
+            <span style={{ color: '#059669', fontSize: 20, fontWeight: 800 }}>#{confirmedReport.id}</span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 13, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, fontSize: 13, marginBottom: 16 }}>
             <div>
-              <span style={{ color: '#64748b', display: 'block', fontSize: 11, marginBottom: 2 }}>Status</span>
-              <span style={{ padding: '3px 10px', borderRadius: 12, fontSize: 12, fontWeight: 600, background: 'rgba(59,130,246,0.15)', color: '#3b82f6', display: 'inline-block' }}>
-                {confirmedReport.status || 'Reported'}
-              </span>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: 11, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Status</span>
+              <span className="badge badge-emerald">{confirmedReport.status || 'Reported'}</span>
             </div>
             <div>
-              <span style={{ color: '#64748b', display: 'block', fontSize: 11, marginBottom: 2 }}>Timestamp</span>
-              <span style={{ color: 'white', fontWeight: 500 }}>{new Date(confirmedReport.created_at).toLocaleString()}</span>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: 11, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Submitted At</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{new Date(confirmedReport.created_at).toLocaleString()}</span>
             </div>
             <div>
-              <span style={{ color: '#64748b', display: 'block', fontSize: 11, marginBottom: 2 }}>Location</span>
-              <span style={{ color: 'white', fontWeight: 500 }}>{confirmedReport.location}</span>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: 11, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Location</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{confirmedReport.location}</span>
             </div>
             <div>
-              <span style={{ color: '#64748b', display: 'block', fontSize: 11, marginBottom: 2 }}>Building</span>
-              <span style={{ color: 'white', fontWeight: 500 }}>{confirmedReport.building || 'N/A'}</span>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: 11, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Building</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{confirmedReport.building || 'N/A'}</span>
             </div>
           </div>
 
           {photoPreview && (
-            <div style={{ marginTop: 12 }}>
-              <span style={{ color: '#64748b', display: 'block', fontSize: 11, marginBottom: 6 }}>Attached Photo</span>
-              <img src={photoPreview} alt="Issue photo" style={{ width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 8, border: '1px solid #334155' }} />
+            <div style={{ marginTop: 14 }}>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: 11, marginBottom: 8, fontWeight: 700, textTransform: 'uppercase' }}>Attached Photo</span>
+              <img src={photoPreview} alt="Issue photo" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 12, border: '1px solid #e2e8f0' }} />
             </div>
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button
-            onClick={resetForm}
-            style={{ flex: 1, padding: '10px 16px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-          >
+        <div style={{ display: 'flex', gap: 14 }}>
+          <button onClick={resetForm} className="btn btn-outline" style={{ flex: 1, padding: '12px 0' }}>
             Submit Another Report
           </button>
           {onCancel && (
-            <button
-              onClick={onCancel}
-              style={{ flex: 1, padding: '10px 16px', background: 'linear-gradient(135deg, #22c55e, #16a34a)', border: 'none', borderRadius: 8, color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-            >
+            <button onClick={onCancel} className="btn btn-primary" style={{ flex: 1, padding: '12px 0' }}>
               Done / View Reports
             </button>
           )}
@@ -166,155 +155,140 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
   }
 
   return (
-    <div style={{ background: '#1e293b', borderRadius: 12, padding: 24, border: '1px solid #334155', marginBottom: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: 'rgba(34,197,94,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <FileText size={18} color="#22c55e" />
+    <div className="glass-card" style={{ marginBottom: 28, padding: 32 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 14, background: '#ecfdf5', border: '1px solid #a7f3d0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <FileText size={22} color="#059669" />
           </div>
           <div>
-            <h3 style={{ color: 'white', fontSize: 16, fontWeight: 600, margin: 0 }}>Campus Maintenance & Cleanliness Reporting</h3>
-            <p style={{ color: '#94a3b8', fontSize: 12, margin: 0 }}>SCRUM05-F001 Issue Submission</p>
+            <h3 style={{ color: 'var(--text-main)', fontSize: 18, fontWeight: 800, margin: 0 }}>Report Campus Maintenance & Cleanliness Issue</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: '2px 0 0', fontWeight: 500 }}>Upload a photo and details to report an issue on campus</p>
           </div>
         </div>
         {onCancel && (
-          <button onClick={onCancel} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', padding: 4 }}>
-            <X size={20} />
+          <button onClick={onCancel} style={{ background: '#f1f5f9', border: 'none', color: '#64748b', cursor: 'pointer', padding: 8, borderRadius: 10 }}>
+            <X size={18} />
           </button>
         )}
       </div>
 
       {errorMessage && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, marginBottom: 18 }}>
-          <AlertCircle size={18} color="#ef4444" style={{ flexShrink: 0 }} />
-          <span style={{ color: '#fca5a5', fontSize: 13 }}>{errorMessage}</span>
+        <div className="alert-banner alert-banner-error">
+          <AlertCircle size={18} color="#dc2626" style={{ flexShrink: 0 }} />
+          <span>{errorMessage}</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-          {/* Location Dropdown Selection */}
-          <div>
-            <label style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 6 }}>
-              Issue Location * <span style={{ color: '#ef4444' }}>(Required)</span>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+          {/* Location Selection */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label">
+              Issue Location <span style={{ color: '#dc2626' }}>*</span>
             </label>
             <select
               value={formData.location}
               onChange={handleLocationChange}
-              style={{ width: '100%', padding: '10px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: formData.location ? 'white' : '#64748b', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+              className="form-select"
             >
               <option value="">-- Select Campus Location --</option>
               {locations.map((loc) => (
-                <option key={loc.id || loc.name} value={loc.name} style={{ background: '#0f172a', color: 'white' }}>
+                <option key={loc.id || loc.name} value={loc.name}>
                   {loc.name} ({loc.building})
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Photo File Input */}
-          <div>
-            <label style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 6 }}>
-              Issue Photo * <span style={{ color: '#ef4444' }}>(Required)</span>
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoChange}
-              style={{ width: '100%', padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#94a3b8', fontSize: 12, boxSizing: 'border-box' }}
-            />
-          </div>
-
           {/* Building */}
-          <div>
-            <label style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 6 }}>Building / Block (Optional)</label>
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label">Building / Block (Optional)</label>
             <input
               type="text"
               value={formData.building}
               onChange={(e) => setFormData({ ...formData, building: e.target.value })}
               placeholder="e.g. Block A"
-              style={{ width: '100%', padding: '10px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: 'white', fontSize: 13, boxSizing: 'border-box' }}
+              className="form-input"
             />
           </div>
 
           {/* Floor & Area */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div>
-              <label style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 6 }}>Floor</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Floor</label>
               <input
                 type="text"
                 value={formData.floor}
                 onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
                 placeholder="e.g. 1st Floor"
-                style={{ width: '100%', padding: '10px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: 'white', fontSize: 13, boxSizing: 'border-box' }}
+                className="form-input"
               />
             </div>
-            <div>
-              <label style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 6 }}>Area</label>
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Area</label>
               <input
                 type="text"
                 value={formData.area}
                 onChange={(e) => setFormData({ ...formData, area: e.target.value })}
                 placeholder="e.g. Washroom"
-                style={{ width: '100%', padding: '10px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: 'white', fontSize: 13, boxSizing: 'border-box' }}
+                className="form-input"
               />
             </div>
           </div>
 
+          {/* Photo File Upload Box */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label">
+              Upload Photo <span style={{ color: '#dc2626' }}>*</span>
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              className="form-input"
+              style={{ padding: '9px 14px' }}
+            />
+          </div>
+
           {/* Description */}
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 6 }}>Description / Notes (Optional)</label>
+          <div style={{ gridColumn: '1 / -1' }} className="form-group">
+            <label className="form-label">Description / Issue Details (Optional)</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Provide specific details regarding the cleanliness or maintenance issue..."
+              placeholder="Describe the issue, cleanliness concern or maintenance requirement in detail..."
               rows={3}
-              style={{ width: '100%', padding: '10px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: 'white', fontSize: 13, resize: 'vertical', boxSizing: 'border-box' }}
+              className="form-textarea"
             />
           </div>
         </div>
 
-        {/* Photo Preview */}
+        {/* Photo Preview Card */}
         {photoPreview && (
-          <div style={{ marginBottom: 16, padding: 12, background: '#0f172a', borderRadius: 8, border: '1px solid #334155', display: 'flex', alignItems: 'center', gap: 14 }}>
-            <img src={photoPreview} alt="Selected preview" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6 }} />
+          <div style={{ marginBottom: 20, padding: 14, background: '#f8fafc', borderRadius: 14, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <img src={photoPreview} alt="Selected preview" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 10, border: '1px solid #cbd5e1' }} />
             <div>
-              <span style={{ color: 'white', fontSize: 13, fontWeight: 500, display: 'block' }}>{formData.photo.name}</span>
-              <span style={{ color: '#64748b', fontSize: 11 }}>{(formData.photo.size / 1024).toFixed(1)} KB</span>
+              <span style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 700, display: 'block' }}>{formData.photo.name}</span>
+              <span style={{ color: 'var(--text-subtle)', fontSize: 11, fontWeight: 500 }}>{(formData.photo.size / 1024).toFixed(1)} KB</span>
             </div>
           </div>
         )}
 
-        {/* Submit & Cancel Buttons */}
+        {/* Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
           {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              style={{ padding: '10px 18px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: '#94a3b8', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}
-            >
+            <button type="button" onClick={onCancel} className="btn btn-outline">
               Cancel
             </button>
           )}
           <button
             type="submit"
             disabled={submitting || !formData.photo || !formData.location}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 24px',
-              background: submitting || !formData.photo || !formData.location ? '#334155' : 'linear-gradient(135deg, #22c55e, #16a34a)',
-              color: 'white',
-              border: 'none',
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: submitting || !formData.photo || !formData.location ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s',
-            }}
+            className="btn btn-primary"
+            style={{ padding: '12px 28px' }}
           >
-            <Send size={15} />
+            <Send size={16} />
             {submitting ? 'Submitting Report...' : 'Submit Report'}
           </button>
         </div>

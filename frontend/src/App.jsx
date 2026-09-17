@@ -1,9 +1,52 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { LayoutDashboard, FileText, Coins, BarChart3, Settings, LogOut, Users, Menu, X, AlertCircle, CheckCircle, Clock, Send, Eye, ChevronRight, Upload, MapPin, Building, Layers, ArrowLeft, RefreshCw, Gift, History, TrendingUp, TrendingDown } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
+import {
+  LayoutDashboard,
+  FileText,
+  Coins,
+  BarChart3,
+  Settings,
+  LogOut,
+  Users,
+  Menu,
+  X,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Send,
+  Eye,
+  ChevronRight,
+  Upload,
+  MapPin,
+  Building,
+  Layers,
+  ArrowLeft,
+  RefreshCw,
+  Gift,
+  History,
+  TrendingUp,
+  TrendingDown,
+  ShieldCheck,
+  Check
+} from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  AreaChart,
+  Area
+} from 'recharts';
 import { authAPI, reportsAPI, tokensAPI, rewardsAPI, dashboardAPI } from './api';
-import { useEffect } from 'react';
 import MaintenanceReportForm from './MaintenanceReportForm';
 import StaffReportsQueue from './StaffReportsQueue';
 
@@ -21,57 +64,136 @@ function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
-      <div style={{ width: 400, padding: 40, background: '#1e293b', borderRadius: 12, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', border: '1px solid #334155' }}>
+    <div style={{
+      minHeight: '100vh',
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justify: 'center',
+      background: 'radial-gradient(circle at 50% 50%, #ecfdf5 0%, #f8fafc 80%)',
+      padding: 20,
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Decorative background ambient glows */}
+      <div style={{
+        position: 'absolute',
+        top: '-10%',
+        right: '-5%',
+        width: '450px',
+        height: '450px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(255,255,255,0) 70%)',
+        pointerEvents: 'none'
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '-10%',
+        left: '-5%',
+        width: '400px',
+        height: '400px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(5, 150, 105, 0.1) 0%, rgba(255,255,255,0) 70%)',
+        pointerEvents: 'none'
+      }} />
+
+      <div className="glass-card" style={{
+        width: '100%',
+        maxWidth: 440,
+        margin: '0 auto',
+        padding: '44px 40px',
+        boxShadow: '0 20px 45px -10px rgba(15, 23, 42, 0.08)',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: 24,
+        position: 'relative',
+        zIndex: 1
+      }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ width: 56, height: 56, borderRadius: 12, background: 'linear-gradient(135deg, #22c55e, #16a34a)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-            <Coins size={28} color="white" />
+          <div style={{
+            width: 64,
+            height: 64,
+            borderRadius: 20,
+            background: 'var(--primary-gradient)',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+            margin: '0 auto 20px',
+            boxShadow: 'var(--shadow-glow)'
+          }}>
+            <Coins size={32} color="#white" />
           </div>
-          <h1 style={{ color: 'white', fontSize: 24, fontWeight: 700, margin: 0 }}>Campus Green</h1>
-          <p style={{ color: '#94a3b8', fontSize: 14, marginTop: 8 }}>Maintenance Reporting & Green Tokens</p>
+          <h1 style={{ color: 'var(--text-main)', fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
+            Campus Green
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 8, fontWeight: 500 }}>
+            Maintenance Reporting & Green Token Management
+          </p>
         </div>
+
         <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 6 }}>Username</label>
+          <div className="form-group">
+            <label className="form-label">Username</label>
             <input
               type="text"
+              className="form-input"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: 'white', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
-              placeholder="Enter username"
+              placeholder="Enter your username"
             />
           </div>
-          <div style={{ marginBottom: 24 }}>
-            <label style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500, display: 'block', marginBottom: 6 }}>Password</label>
+          <div className="form-group" style={{ marginBottom: 24 }}>
+            <label className="form-label">Password</label>
             <input
               type="password"
+              className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '10px 14px', background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: 'white', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
-              placeholder="Enter password"
+              placeholder="Enter your password"
             />
           </div>
+
           {error && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, marginBottom: 16 }}>
-              <AlertCircle size={16} color="#ef4444" />
-              <span style={{ color: '#fca5a5', fontSize: 13 }}>{error}</span>
+            <div className="alert-banner alert-banner-error">
+              <AlertCircle size={16} color="var(--accent-red)" style={{ flexShrink: 0 }} />
+              <span>{error}</span>
             </div>
           )}
+
           <button
             type="submit"
+            className="btn btn-primary"
             disabled={loading || !username || !password}
-            style={{ width: '100%', padding: '12px 0', background: loading || !username || !password ? '#334155' : 'linear-gradient(135deg, #22c55e, #16a34a)', color: 'white', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: loading || !username || !password ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}
+            style={{ width: '100%', padding: '14px 0', fontSize: 14, borderRadius: 12 }}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Signing in...' : 'Sign In to Portal'}
           </button>
         </form>
-        <div style={{ marginTop: 24, padding: 12, background: '#0f172a', borderRadius: 8, border: '1px solid #1e3a5f' }}>
-          <p style={{ color: '#64748b', fontSize: 11, margin: 0, lineHeight: 1.6 }}>
-            Demo accounts:<br />
-            <span style={{ color: '#94a3b8' }}>admin / admin123</span> (Admin)<br />
-            <span style={{ color: '#94a3b8' }}>maintenance1 / maint123</span> (Maintenance)<br />
-            <span style={{ color: '#94a3b8' }}>student1 / student123</span> (Student)
-          </p>
+
+        <div style={{
+          marginTop: 32,
+          padding: '18px 20px',
+          background: '#f8fafc',
+          borderRadius: 14,
+          border: '1px solid #e2e8f0'
+        }}>
+          <div style={{ color: 'var(--text-subtle)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>
+            Demo Accounts
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: 600 }}>admin / admin123</span>
+              <span className="badge badge-purple">Admin</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: 600 }}>maintenance1 / maint123</span>
+              <span className="badge badge-amber">Maintenance</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: 600 }}>student1 / student123</span>
+              <span className="badge badge-emerald">Student</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -81,20 +203,40 @@ function LoginPage() {
 function KPICard({ title, value, icon, color }) {
   const iconMap = { FileText, AlertCircle, CheckCircle, Coins, Gift, Users };
   const Icon = iconMap[icon] || FileText;
-  const colorMap = { blue: '#3b82f6', green: '#22c55e', yellow: '#eab308', purple: '#a855f7', red: '#ef4444', indigo: '#6366f1' };
-  const bg = colorMap[color] || '#3b82f6';
+  const colorMap = {
+    blue: { hex: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
+    green: { hex: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
+    yellow: { hex: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+    purple: { hex: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
+    red: { hex: '#dc2626', bg: '#fef2f2', border: '#fecaca' },
+    indigo: { hex: '#4f46e5', bg: '#eef2ff', border: '#c7d2fe' },
+  };
+  const c = colorMap[color] || colorMap.green;
   return (
-    <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, border: '1px solid #334155', flex: '1 1 200px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <span style={{ color: '#94a3b8', fontSize: 13 }}>{title}</span>
-        <div style={{ width: 36, height: 36, borderRadius: 8, background: `${bg}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon size={18} color={bg} />
+    <div className="glass-card glass-card-interactive" style={{ flex: '1 1 210px', padding: '22px 24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+        <span style={{ color: 'var(--text-subtle)', fontSize: 13, fontWeight: 600 }}>{title}</span>
+        <div style={{ width: 42, height: 42, borderRadius: 12, background: c.bg, border: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon size={20} color={c.hex} />
         </div>
       </div>
-      <div style={{ color: 'white', fontSize: 28, fontWeight: 700 }}>{value}</div>
+      <div style={{ color: 'var(--text-main)', fontSize: 32, fontWeight: 800, letterSpacing: '-1px' }}>{value}</div>
     </div>
   );
 }
+
+const CHART_TOOLTIP_STYLE = {
+  background: '#ffffff',
+  border: '1px solid #e2e8f0',
+  borderRadius: 12,
+  color: '#0f172a',
+  fontSize: 12,
+  boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+  padding: '8px 14px'
+};
+const CHART_GRID_COLOR = '#e2e8f0';
+const CHART_AXIS_COLOR = '#64748b';
+const HEX_COLORS = ['#2563eb', '#059669', '#d97706', '#dc2626', '#7c3aed', '#4f46e5'];
 
 function DashboardPage() {
   const [data, setData] = useState(null);
@@ -104,77 +246,136 @@ function DashboardPage() {
     dashboardAPI.get().then(res => { setData(res.data); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div style={{ color: '#94a3b8', padding: 40, textAlign: 'center' }}>Loading dashboard...</div>;
-  if (!data) return <div style={{ color: '#ef4444', padding: 40, textAlign: 'center' }}>Failed to load dashboard</div>;
-
-  const COLORS = ['#3b82f6', '#22c55e', '#eab308', '#ef4444', '#a855f7'];
+  if (loading) return <div style={{ color: 'var(--text-muted)', padding: 60, textAlign: 'center', fontSize: 14, fontWeight: 500 }}>Loading dashboard analytics...</div>;
+  if (!data) return <div style={{ color: 'var(--accent-red)', padding: 60, textAlign: 'center', fontSize: 14, fontWeight: 600 }}>Failed to load dashboard data</div>;
 
   return (
     <div>
-      <h2 style={{ color: 'white', fontSize: 22, fontWeight: 700, marginBottom: 24 }}>Dashboard</h2>
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 32 }}>
+      <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <h2 style={{ color: 'var(--text-main)', fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>Dashboard Overview</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 6, fontWeight: 500 }}>Real-time stats and maintenance status tracking</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '6px 14px', borderRadius: 999, fontSize: 12, color: '#059669', fontWeight: 600 }}>
+          <div className="pulse-dot" /> Live System Active
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 32 }}>
         {data.kpis.map((kpi, i) => (
           <KPICard key={i} title={kpi.title} value={kpi.value} icon={kpi.icon} color={['blue', 'yellow', 'green', 'purple', 'red', 'indigo'][i % 6]} />
         ))}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
-        <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, border: '1px solid #334155' }}>
-          <h3 style={{ color: 'white', fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Reports: Submitted vs Resolved</h3>
-          <ResponsiveContainer width="100%" height={250}>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
+        <div className="glass-card">
+          <h3 style={{ color: 'var(--text-main)', fontSize: 15, fontWeight: 700, marginBottom: 20, letterSpacing: '-0.2px' }}>
+            Reports Activity: Submitted vs Resolved
+          </h3>
+          <ResponsiveContainer width="100%" height={240}>
             <AreaChart data={data.trend.labels.map((l, i) => ({ name: l, submitted: data.trend.submitted[i], resolved: data.trend.resolved[i] }))}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-              <YAxis stroke="#64748b" fontSize={12} />
-              <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: 'white' }} />
-              <Area type="monotone" dataKey="submitted" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} />
-              <Area type="monotone" dataKey="resolved" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} />
+              <defs>
+                <linearGradient id="gradSubmitted" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gradResolved" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#059669" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#059669" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+              <XAxis dataKey="name" stroke={CHART_AXIS_COLOR} fontSize={11} tickLine={false} />
+              <YAxis stroke={CHART_AXIS_COLOR} fontSize={11} tickLine={false} />
+              <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+              <Area type="monotone" dataKey="submitted" stroke="#2563eb" fill="url(#gradSubmitted)" strokeWidth={2.5} name="Submitted" />
+              <Area type="monotone" dataKey="resolved" stroke="#059669" fill="url(#gradResolved)" strokeWidth={2.5} name="Resolved" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
-        <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, border: '1px solid #334155' }}>
-          <h3 style={{ color: 'white', fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Reports by Status</h3>
-          <ResponsiveContainer width="100%" height={250}>
+
+        <div className="glass-card">
+          <h3 style={{ color: 'var(--text-main)', fontSize: 15, fontWeight: 700, marginBottom: 20, letterSpacing: '-0.2px' }}>
+            Reports by Status Breakdown
+          </h3>
+          <ResponsiveContainer width="100%" height={240}>
             <BarChart data={data.status_distribution}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="label" stroke="#64748b" fontSize={12} />
-              <YAxis stroke="#64748b" fontSize={12} />
-              <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: 'white' }} />
-              <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+              <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID_COLOR} />
+              <XAxis dataKey="label" stroke={CHART_AXIS_COLOR} fontSize={11} tickLine={false} />
+              <YAxis stroke={CHART_AXIS_COLOR} fontSize={11} tickLine={false} />
+              <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+              <Bar dataKey="value" radius={[6, 6, 0, 0]}>
                 {data.status_distribution.map((entry, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  <Cell key={i} fill={HEX_COLORS[i % HEX_COLORS.length]} />
                 ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-        <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, border: '1px solid #334155' }}>
-          <h3 style={{ color: 'white', fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Green Tokens Overview</h3>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div className="glass-card">
+          <h3 style={{ color: 'var(--text-main)', fontSize: 15, fontWeight: 700, marginBottom: 20 }}>
+            Green Tokens Distribution
+          </h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={data.token_summary} dataKey="value" nameKey="label" cx="50%" cy="50%" outerRadius={70} label={({ label, value }) => `${label}: ${value}`}>
+              <Pie data={data.token_summary} dataKey="value" nameKey="label" cx="50%" cy="50%" outerRadius={75} innerRadius={40} label={({ label, value }) => `${label}: ${value}`}>
                 {data.token_summary.map((entry, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                  <Cell key={i} fill={HEX_COLORS[i % HEX_COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 8, color: 'white' }} />
+              <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        <div style={{ background: '#1e293b', borderRadius: 12, padding: 20, border: '1px solid #334155' }}>
-          <h3 style={{ color: 'white', fontSize: 15, fontWeight: 600, marginBottom: 16 }}>Recent Reports</h3>
-          {data.recent_reports.map((r, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < data.recent_reports.length - 1 ? '1px solid #334155' : 'none' }}>
-              <div>
-                <div style={{ color: 'white', fontSize: 13, fontWeight: 500 }}>{r.location}</div>
-                <div style={{ color: '#64748b', fontSize: 11 }}>{new Date(r.created_at).toLocaleDateString()}</div>
-              </div>
-              <span style={{ padding: '4px 10px', borderRadius: 12, fontSize: 11, fontWeight: 500, background: r.status === 'Resolved' ? 'rgba(34,197,94,0.15)' : r.status === 'Submitted' ? 'rgba(59,130,246,0.15)' : r.status === 'Rejected' ? 'rgba(239,68,68,0.15)' : 'rgba(234,179,8,0.15)', color: r.status === 'Resolved' ? '#22c55e' : r.status === 'Submitted' ? '#3b82f6' : r.status === 'Rejected' ? '#ef4444' : '#eab308' }}>
-                {r.status}
-              </span>
-            </div>
-          ))}
+
+        <div className="glass-card">
+          <h3 style={{ color: 'var(--text-main)', fontSize: 15, fontWeight: 700, marginBottom: 20 }}>
+            Recent Maintenance Activity
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {data.recent_reports.map((r, i) => {
+              const statusStyles = {
+                Resolved: { bg: '#ecfdf5', text: '#059669', border: '#a7f3d0' },
+                Submitted: { bg: '#eff6ff', text: '#2563eb', border: '#bfdbfe' },
+                Reported: { bg: '#eff6ff', text: '#2563eb', border: '#bfdbfe' },
+                Verified: { bg: '#f5f3ff', text: '#7c3aed', border: '#ddd6fe' },
+                'In Progress': { bg: '#fffbeb', text: '#d97706', border: '#fde68a' },
+                Rejected: { bg: '#fef2f2', text: '#dc2626', border: '#fecaca' }
+              }[r.status] || { bg: '#f8fafc', text: '#64748b', border: '#e2e8f0' };
+
+              return (
+                <div key={i} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justify: 'space-between',
+                  padding: '12px 14px',
+                  borderRadius: 10,
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  marginBottom: 6
+                }}>
+                  <div>
+                    <div style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 700 }}>{r.location}</div>
+                    <div style={{ color: 'var(--text-subtle)', fontSize: 11, marginTop: 2 }}>{new Date(r.created_at).toLocaleDateString()}</div>
+                  </div>
+                  <span style={{
+                    padding: '4px 12px',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    background: statusStyles.bg,
+                    color: statusStyles.text,
+                    border: `1px solid ${statusStyles.border}`
+                  }}>
+                    {r.status}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -188,8 +389,6 @@ function ReportsPage() {
   const [showForm, setShowForm] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const [filter, setFilter] = useState('');
-  const [formData, setFormData] = useState({ location: '', building: '', floor: '', area: '', description: '', photo: null });
-  const [submitting, setSubmitting] = useState(false);
   const [statusUpdate, setStatusUpdate] = useState({ status: '', reason: '' });
   const [history, setHistory] = useState([]);
 
@@ -198,29 +397,6 @@ function ReportsPage() {
   };
 
   useEffect(() => { loadReports(); }, [filter]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.photo || !formData.location) return;
-    setSubmitting(true);
-    const fd = new FormData();
-    fd.append('photo', formData.photo);
-    fd.append('location', formData.location);
-    if (formData.building) fd.append('building', formData.building);
-    if (formData.floor) fd.append('floor', formData.floor);
-    if (formData.area) fd.append('area', formData.area);
-    if (formData.description) fd.append('description', formData.description);
-    try {
-      await reportsAPI.create(fd);
-      setShowForm(false);
-      setFormData({ location: '', building: '', floor: '', area: '', description: '', photo: null });
-      loadReports();
-    } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to submit report');
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleStatusUpdate = async (reportId) => {
     if (!statusUpdate.status) return;
@@ -243,7 +419,14 @@ function ReportsPage() {
     }
   };
 
-  const statusColor = (s) => ({ Reported: '#3b82f6', Submitted: '#3b82f6', Verified: '#a855f7', 'In Progress': '#eab308', Resolved: '#22c55e', Rejected: '#ef4444' }[s] || '#64748b');
+  const statusStyles = (s) => ({
+    Reported: { bg: '#eff6ff', text: '#2563eb', border: '#bfdbfe' },
+    Submitted: { bg: '#eff6ff', text: '#2563eb', border: '#bfdbfe' },
+    Verified: { bg: '#f5f3ff', text: '#7c3aed', border: '#ddd6fe' },
+    'In Progress': { bg: '#fffbeb', text: '#d97706', border: '#fde68a' },
+    Resolved: { bg: '#ecfdf5', text: '#059669', border: '#a7f3d0' },
+    Rejected: { bg: '#fef2f2', text: '#dc2626', border: '#fecaca' }
+  }[s] || { bg: '#f8fafc', text: '#64748b', border: '#e2e8f0' });
 
   const isMaintenance = user?.role === 'maintenance' || user?.role === 'admin';
 
@@ -253,10 +436,13 @@ function ReportsPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h2 style={{ color: 'white', fontSize: 22, fontWeight: 700, margin: 0 }}>My Reports</h2>
-        <button onClick={() => setShowForm(true)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-          <Upload size={14} /> New Report
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+        <div>
+          <h2 style={{ color: 'var(--text-main)', fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>My Submitted Reports</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 6, fontWeight: 500 }}>Submit cleanliness and campus maintenance issues to earn Green Tokens</p>
+        </div>
+        <button onClick={() => setShowForm(true)} className="btn btn-primary" style={{ padding: '12px 24px' }}>
+          <Upload size={16} /> Report Maintenance Issue
         </button>
       </div>
 
@@ -268,79 +454,105 @@ function ReportsPage() {
       )}
 
       {selectedReport && (
-        <div style={{ background: '#1e293b', borderRadius: 12, padding: 24, border: '1px solid #334155', marginBottom: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button onClick={() => { setSelectedReport(null); setHistory([]); }} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}><ArrowLeft size={18} /></button>
-              <h3 style={{ color: 'white', fontSize: 16, fontWeight: 600, margin: 0 }}>Report #{selectedReport.id}</h3>
-              <span style={{ padding: '4px 10px', borderRadius: 12, fontSize: 11, fontWeight: 500, background: `${statusColor(selectedReport.status)}20`, color: statusColor(selectedReport.status) }}>{selectedReport.status}</span>
+        <div className="glass-card" style={{ marginBottom: 28, padding: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <button onClick={() => { setSelectedReport(null); setHistory([]); }} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--text-main)', cursor: 'pointer', padding: 8, borderRadius: 10, display: 'flex', alignItems: 'center' }}>
+                <ArrowLeft size={18} />
+              </button>
+              <h3 style={{ color: 'var(--text-main)', fontSize: 18, fontWeight: 800, margin: 0 }}>Report #{selectedReport.id}</h3>
+              {(() => {
+                const st = statusStyles(selectedReport.status);
+                return (
+                  <span style={{ padding: '4px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: st.bg, color: st.text, border: `1px solid ${st.border}` }}>
+                    {selectedReport.status}
+                  </span>
+                );
+              })()}
             </div>
-            <button onClick={() => viewHistory(selectedReport.id)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 6, color: '#94a3b8', fontSize: 12, cursor: 'pointer' }}><History size={14} /> History</button>
+            <button onClick={() => viewHistory(selectedReport.id)} className="btn btn-secondary" style={{ fontSize: 13, padding: '8px 16px', gap: 6 }}>
+              <History size={15} /> View Audit History
+            </button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16, fontSize: 13 }}>
-            <div><span style={{ color: '#64748b' }}>Location: </span><span style={{ color: 'white' }}>{selectedReport.location}</span></div>
-            <div><span style={{ color: '#64748b' }}>Building: </span><span style={{ color: 'white' }}>{selectedReport.building || '-'}</span></div>
-            <div><span style={{ color: '#64748b' }}>Floor: </span><span style={{ color: 'white' }}>{selectedReport.floor || '-'}</span></div>
-            <div><span style={{ color: '#64748b' }}>Area: </span><span style={{ color: 'white' }}>{selectedReport.area || '-'}</span></div>
-          </div>
-          {selectedReport.description && <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 16 }}>{selectedReport.description}</p>}
 
-          {history.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <h4 style={{ color: 'white', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Status History</h4>
-              {history.map((h, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', fontSize: 12 }}>
-                  <span style={{ color: '#64748b' }}>{new Date(h.changed_at).toLocaleString()}</span>
-                  <span style={{ color: statusColor(h.from_status) }}>{h.from_status}</span>
-                  <ChevronRight size={12} color="#64748b" />
-                  <span style={{ color: statusColor(h.to_status) }}>{h.to_status}</span>
-                  {h.reason && <span style={{ color: '#ef4444', fontSize: 11 }}>({h.reason})</span>}
-                </div>
-              ))}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20, fontSize: 13 }}>
+            {[['Location', selectedReport.location], ['Building', selectedReport.building || '—'], ['Floor', selectedReport.floor || '—'], ['Area', selectedReport.area || '—']].map(([label, val]) => (
+              <div key={label} style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0' }}>
+                <span style={{ color: 'var(--text-subtle)', fontSize: 11, display: 'block', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</span>
+                <span style={{ color: 'var(--text-main)', fontWeight: 700, fontSize: 14 }}>{val}</span>
+              </div>
+            ))}
+          </div>
+
+          {selectedReport.description && (
+            <div style={{ marginBottom: 20 }}>
+              <label className="form-label" style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Description</label>
+              <p style={{ color: 'var(--text-main)', fontSize: 14, padding: '14px 16px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0', lineHeight: 1.6 }}>
+                {selectedReport.description}
+              </p>
             </div>
           )}
 
-          {isMaintenance && selectedReport.status !== 'Resolved' && selectedReport.status !== 'Rejected' && (
-            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
-              <div>
-                <label style={{ color: '#94a3b8', fontSize: 11, display: 'block', marginBottom: 4 }}>New Status</label>
-                <select value={statusUpdate.status} onChange={(e) => setStatusUpdate({ ...statusUpdate, status: e.target.value })} style={{ padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 6, color: 'white', fontSize: 13 }}>
-                  <option value="">Select...</option>
-                  {selectedReport.status === 'Submitted' && <option value="Verified">Verify</option>}
-                  {selectedReport.status === 'Submitted' && <option value="Rejected">Reject</option>}
-                  {selectedReport.status === 'Verified' && <option value="In Progress">Start Progress</option>}
-                  {selectedReport.status === 'In Progress' && <option value="Resolved">Resolve</option>}
-                </select>
+          {history.length > 0 && (
+            <div style={{ marginBottom: 20 }}>
+              <h4 style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 700, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status Progression Log</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {history.map((h, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}>
+                    <span style={{ color: 'var(--text-subtle)', fontWeight: 500 }}>{new Date(h.changed_at).toLocaleString()}</span>
+                    <span className="badge badge-blue">{h.from_status}</span>
+                    <ChevronRight size={14} color="var(--text-subtle)" />
+                    <span className="badge badge-emerald">{h.to_status}</span>
+                    {h.reason && <span style={{ color: 'var(--text-muted)', fontSize: 12, marginLeft: 'auto', fontStyle: 'italic' }}>"{h.reason}"</span>}
+                  </div>
+                ))}
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ color: '#94a3b8', fontSize: 11, display: 'block', marginBottom: 4 }}>Reason (optional)</label>
-                <input value={statusUpdate.reason} onChange={(e) => setStatusUpdate({ ...statusUpdate, reason: e.target.value })} style={{ width: '100%', padding: '8px 12px', background: '#0f172a', border: '1px solid #334155', borderRadius: 6, color: 'white', fontSize: 13, boxSizing: 'border-box' }} />
-              </div>
-              <button onClick={() => handleStatusUpdate(selectedReport.id)} disabled={!statusUpdate.status} style={{ padding: '8px 16px', background: statusUpdate.status ? '#3b82f6' : '#334155', color: 'white', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: statusUpdate.status ? 'pointer' : 'not-allowed' }}>Update</button>
             </div>
           )}
         </div>
       )}
 
-      {loading ? <div style={{ color: '#94a3b8', padding: 40, textAlign: 'center' }}>Loading...</div> : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {reports.map((r) => (
-            <div key={r.id} onClick={() => setSelectedReport(r)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', background: '#1e293b', borderRadius: 10, border: '1px solid #334155', cursor: 'pointer', transition: 'border-color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.borderColor = '#475569'} onMouseLeave={(e) => e.currentTarget.style.borderColor = '#334155'}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FileText size={16} color="#64748b" /></div>
-                <div>
-                  <div style={{ color: 'white', fontSize: 14, fontWeight: 500 }}>Report #{r.id} - {r.location}</div>
-                  <div style={{ color: '#64748b', fontSize: 12, marginTop: 2 }}>{r.building && `${r.building}, `}{r.floor && `${r.floor} Floor`}{r.area && ` - ${r.area}`}</div>
+      {loading ? (
+        <div style={{ color: 'var(--text-muted)', padding: 60, textAlign: 'center', fontSize: 14, fontWeight: 500 }}>Loading maintenance reports...</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {reports.map((r) => {
+            const st = statusStyles(r.status);
+            return (
+              <div
+                key={r.id}
+                onClick={() => setSelectedReport(r)}
+                className="glass-card glass-card-interactive"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', cursor: 'pointer' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 14, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #a7f3d0' }}>
+                    <FileText size={20} color="#059669" />
+                  </div>
+                  <div>
+                    <div style={{ color: 'var(--text-main)', fontSize: 15, fontWeight: 800 }}>Report #{r.id} &mdash; {r.location}</div>
+                    <div style={{ color: 'var(--text-subtle)', fontSize: 13, marginTop: 3, fontWeight: 500 }}>
+                      {r.building && `${r.building}`}{r.floor && `, ${r.floor} Floor`}{r.area && ` — ${r.area}`}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <span style={{ padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: st.bg, color: st.text, border: `1px solid ${st.border}` }}>
+                    {r.status}
+                  </span>
+                  <span style={{ color: 'var(--text-subtle)', fontSize: 12, fontWeight: 500 }}>{new Date(r.created_at).toLocaleDateString()}</span>
+                  <ChevronRight size={18} color="var(--text-subtle)" />
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ padding: '4px 10px', borderRadius: 12, fontSize: 11, fontWeight: 500, background: `${statusColor(r.status)}20`, color: statusColor(r.status) }}>{r.status}</span>
-                <span style={{ color: '#64748b', fontSize: 11 }}>{new Date(r.created_at).toLocaleDateString()}</span>
-                <ChevronRight size={16} color="#475569" />
-              </div>
+            );
+          })}
+          {reports.length === 0 && (
+            <div className="glass-card" style={{ textAlign: 'center', padding: 60, color: 'var(--text-subtle)' }}>
+              <FileText size={48} color="#cbd5e1" style={{ marginBottom: 14 }} />
+              <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-main)' }}>No reports submitted yet</p>
+              <p style={{ fontSize: 13, marginTop: 6 }}>Click "Report Maintenance Issue" above to submit a new issue report.</p>
             </div>
-          ))}
-          {reports.length === 0 && <div style={{ color: '#64748b', padding: 40, textAlign: 'center', background: '#1e293b', borderRadius: 12, border: '1px solid #334155' }}>No reports found</div>}
+          )}
         </div>
       )}
     </div>
@@ -380,71 +592,131 @@ function TokensPage() {
     }
   };
 
-  if (loading) return <div style={{ color: '#94a3b8', padding: 40, textAlign: 'center' }}>Loading...</div>;
+  if (loading) return <div style={{ color: 'var(--text-muted)', padding: 60, textAlign: 'center', fontSize: 14, fontWeight: 500 }}>Loading Green Token details...</div>;
 
-  const categoryColors = { canteen: '#22c55e', printing: '#3b82f6', merchandise: '#a855f7', transport: '#eab308' };
+  const categoryColors = {
+    canteen: { hex: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
+    printing: { hex: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
+    merchandise: { hex: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
+    transport: { hex: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+  };
 
   return (
     <div>
-      <h2 style={{ color: 'white', fontSize: 22, fontWeight: 700, marginBottom: 24 }}>Green Tokens</h2>
-      <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
-        {[['balance', 'Balance'], ['history', 'History'], ['rewards', 'Rewards']].map(([key, label]) => (
-          <button key={key} onClick={() => setTab(key)} style={{ padding: '8px 20px', background: tab === key ? '#22c55e' : '#1e293b', color: 'white', border: `1px solid ${tab === key ? '#22c55e' : '#334155'}`, borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>{label}</button>
+      <div style={{ marginBottom: 32 }}>
+        <h2 style={{ color: 'var(--text-main)', fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>Green Tokens Wallet</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 6, fontWeight: 500 }}>Earn tokens by reporting verified campus maintenance issues and redeem rewards</p>
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, marginBottom: 32 }}>
+        {[
+          ['balance', 'Token Balance'],
+          ['history', 'Transaction History'],
+          ['rewards', 'Campus Rewards Store']
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={tab === key ? 'btn btn-primary' : 'btn btn-outline'}
+            style={{ fontSize: 13, padding: '10px 22px', borderRadius: 999 }}
+          >
+            {label}
+          </button>
         ))}
       </div>
 
       {tab === 'balance' && balance && (
-        <div style={{ background: 'linear-gradient(135deg, #065f46, #047857)', borderRadius: 16, padding: 32, border: '1px solid #10b981', maxWidth: 400 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <Coins size={24} color="#bbf7d0" />
-            <span style={{ color: '#bbf7d0', fontSize: 14, fontWeight: 500 }}>Your Balance</span>
+        <div style={{ maxWidth: 460 }}>
+          <div style={{
+            borderRadius: 24,
+            padding: 40,
+            background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+            boxShadow: '0 20px 40px -10px rgba(5, 150, 105, 0.35)',
+            marginBottom: 24,
+            color: 'white'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Coins size={24} color="#ffffff" />
+              </div>
+              <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.3px', opacity: 0.9 }}>Green Token Balance</span>
+            </div>
+            <div style={{ fontSize: 60, fontWeight: 900, letterSpacing: '-2px', lineHeight: 1 }}>{balance.balance}</div>
+            <div style={{ fontSize: 14, marginTop: 12, fontWeight: 500, opacity: 0.9 }}>
+              Tokens available for immediate redemption
+            </div>
           </div>
-          <div style={{ color: 'white', fontSize: 48, fontWeight: 800 }}>{balance.balance}</div>
-          <div style={{ color: '#86efac', fontSize: 13, marginTop: 4 }}>Green Tokens</div>
         </div>
       )}
 
       {tab === 'history' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {history.map((t) => (
-            <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', background: '#1e293b', borderRadius: 10, border: '1px solid #334155' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 8, background: t.transaction_type === 'award' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {t.transaction_type === 'award' ? <TrendingUp size={16} color="#22c55e" /> : <TrendingDown size={16} color="#ef4444" />}
+            <div key={t.id} className="glass-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  background: t.transaction_type === 'award' ? '#ecfdf5' : '#fef2f2',
+                  border: `1px solid ${t.transaction_type === 'award' ? '#a7f3d0' : '#fecaca'}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justify: 'center'
+                }}>
+                  {t.transaction_type === 'award' ? <TrendingUp size={20} color="#059669" /> : <TrendingDown size={20} color="#dc2626" />}
                 </div>
                 <div>
-                  <div style={{ color: 'white', fontSize: 13, fontWeight: 500 }}>{t.transaction_type === 'award' ? 'Token Awarded' : 'Reward Redeemed'}</div>
-                  <div style={{ color: '#64748b', fontSize: 11 }}>{new Date(t.created_at).toLocaleString()}</div>
+                  <div style={{ color: 'var(--text-main)', fontSize: 15, fontWeight: 700 }}>
+                    {t.transaction_type === 'award' ? 'Token Awarded (Report Verified)' : 'Reward Redeemed'}
+                  </div>
+                  <div style={{ color: 'var(--text-subtle)', fontSize: 12, marginTop: 3 }}>{new Date(t.created_at).toLocaleString()}</div>
                 </div>
               </div>
-              <span style={{ color: t.transaction_type === 'award' ? '#22c55e' : '#ef4444', fontSize: 16, fontWeight: 700 }}>
+              <span style={{ color: t.transaction_type === 'award' ? '#059669' : '#dc2626', fontSize: 22, fontWeight: 800 }}>
                 {t.transaction_type === 'award' ? '+' : '-'}{t.amount}
               </span>
             </div>
           ))}
-          {history.length === 0 && <div style={{ color: '#64748b', padding: 40, textAlign: 'center', background: '#1e293b', borderRadius: 12, border: '1px solid #334155' }}>No transactions yet</div>}
+          {history.length === 0 && (
+            <div className="glass-card" style={{ textAlign: 'center', padding: 60, color: 'var(--text-subtle)' }}>
+              <Coins size={48} color="#cbd5e1" style={{ marginBottom: 14 }} />
+              <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-main)' }}>No token transactions yet</p>
+            </div>
+          )}
         </div>
       )}
 
       {tab === 'rewards' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
-          {rewards.map((r) => (
-            <div key={r.id} style={{ background: '#1e293b', borderRadius: 12, padding: 20, border: '1px solid #334155' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <span style={{ padding: '3px 8px', borderRadius: 6, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', background: `${categoryColors[r.category] || '#64748b'}20`, color: categoryColors[r.category] || '#64748b' }}>{r.category}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#eab308', fontSize: 13, fontWeight: 600 }}><Coins size={14} /> {r.token_cost}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+          {rewards.map((r) => {
+            const cat = categoryColors[r.category] || { hex: '#64748b', bg: '#f8fafc', border: '#e2e8f0' };
+            const canAfford = balance && balance.balance >= r.token_cost;
+            return (
+              <div key={r.id} className="glass-card glass-card-interactive" style={{ padding: 24, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <span style={{ padding: '4px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', background: cat.bg, color: cat.hex, border: `1px solid ${cat.border}` }}>
+                      {r.category}
+                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#d97706', fontSize: 15, fontWeight: 800 }}>
+                      <Coins size={16} /> {r.token_cost} Tokens
+                    </div>
+                  </div>
+                  <h4 style={{ color: 'var(--text-main)', fontSize: 17, fontWeight: 800, margin: '0 0 10px' }}>{r.name}</h4>
+                  <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 20px', lineHeight: 1.6 }}>{r.description}</p>
+                </div>
+                <button
+                  onClick={() => handleRedeem(r.id)}
+                  disabled={!canAfford}
+                  className={canAfford ? 'btn btn-primary' : 'btn btn-outline'}
+                  style={{ width: '100%', padding: '12px 0', fontSize: 14, borderRadius: 12 }}
+                >
+                  {!canAfford ? `Need ${r.token_cost - (balance?.balance || 0)} more tokens` : 'Redeem Reward'}
+                </button>
               </div>
-              <h4 style={{ color: 'white', fontSize: 15, fontWeight: 600, margin: '0 0 6px' }}>{r.name}</h4>
-              <p style={{ color: '#94a3b8', fontSize: 12, margin: '0 0 16px', lineHeight: 1.5 }}>{r.description}</p>
-              <button
-                onClick={() => handleRedeem(r.id)}
-                disabled={!balance || balance.balance < r.token_cost}
-                style={{ width: '100%', padding: '10px 0', background: balance && balance.balance >= r.token_cost ? 'linear-gradient(135deg, #22c55e, #16a34a)' : '#334155', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: balance && balance.balance >= r.token_cost ? 'pointer' : 'not-allowed' }}
-              >
-                {!balance || balance.balance < r.token_cost ? `Need ${r.token_cost - (balance?.balance || 0)} more tokens` : 'Redeem'}
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -455,47 +727,139 @@ function Sidebar({ currentPage, onNavigate }) {
   const { user, logout } = useAuth();
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'reports', label: 'My Reports', icon: FileText },
+    ...(user?.role === 'maintenance' || user?.role === 'admin' ? [{ id: 'staff', label: 'Staff Verification Queue', icon: CheckCircle }] : []),
     { id: 'tokens', label: 'Green Tokens', icon: Coins },
   ];
 
   return (
-    <div style={{ width: 256, background: '#0f172a', borderRight: '1px solid #1e293b', display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'fixed' }}>
-      <div style={{ padding: 20, borderBottom: '1px solid #1e293b' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 8, background: 'linear-gradient(135deg, #22c55e, #16a34a)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Coins size={18} color="white" /></div>
+    <div style={{
+      width: 260,
+      background: '#ffffff',
+      borderRight: '1px solid #e2e8f0',
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '100vh',
+      position: 'fixed',
+      boxShadow: '2px 0 12px rgba(15, 23, 42, 0.03)',
+      zIndex: 10
+    }}>
+      {/* Brand Header */}
+      <div style={{ padding: '28px 24px', borderBottom: '1px solid #f1f5f9' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{
+            width: 44,
+            height: 44,
+            borderRadius: 14,
+            background: 'var(--primary-gradient)',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+            boxShadow: 'var(--shadow-glow)'
+          }}>
+            <Coins size={22} color="#ffffff" />
+          </div>
           <div>
-            <div style={{ color: 'white', fontSize: 15, fontWeight: 700 }}>Campus Green</div>
-            <div style={{ color: '#64748b', fontSize: 11 }}>Maintenance Portal</div>
+            <div style={{ color: 'var(--text-main)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.3px' }}>
+              Campus Green
+            </div>
+            <div style={{ color: 'var(--text-subtle)', fontSize: 11, fontWeight: 600 }}>
+              Maintenance Portal
+            </div>
           </div>
         </div>
       </div>
-      <nav style={{ padding: 12, flex: 1 }}>
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onNavigate(item.id)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', marginBottom: 4,
-              background: currentPage === item.id ? 'rgba(34,197,94,0.1)' : 'transparent',
-              border: 'none', borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s',
-              color: currentPage === item.id ? '#22c55e' : '#94a3b8', fontSize: 13, fontWeight: currentPage === item.id ? 600 : 400,
-              textAlign: 'left',
-            }}
-          >
-            <item.icon size={18} /> {item.label}
-          </button>
-        ))}
+
+      {/* Navigation Links */}
+      <nav style={{ padding: '20px 14px', flex: 1 }}>
+        <div style={{ color: 'var(--text-subtle)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.2px', padding: '0 12px', marginBottom: 12 }}>
+          Main Menu
+        </div>
+        {menuItems.map((item) => {
+          const active = currentPage === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                width: '100%',
+                padding: '12px 16px',
+                marginBottom: 6,
+                background: active ? '#ecfdf5' : 'transparent',
+                border: active ? '1px solid #a7f3d0' : '1px solid transparent',
+                borderRadius: 12,
+                cursor: 'pointer',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                color: active ? '#059669' : 'var(--text-muted)',
+                fontSize: 14,
+                fontWeight: active ? 700 : 500,
+                textAlign: 'left',
+                fontFamily: 'inherit'
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = '#f8fafc';
+                  e.currentTarget.style.color = 'var(--text-main)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = 'var(--text-muted)';
+                }
+              }}
+            >
+              <item.icon size={19} color={active ? '#059669' : '#64748b'} />
+              {item.label}
+            </button>
+          );
+        })}
       </nav>
-      <div style={{ padding: 16, borderTop: '1px solid #1e293b' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Users size={14} color="#64748b" /></div>
-          <div>
-            <div style={{ color: 'white', fontSize: 12, fontWeight: 500 }}>{user?.full_name}</div>
-            <div style={{ color: '#64748b', fontSize: 10, textTransform: 'capitalize' }}>{user?.role}</div>
+
+      {/* User Footer Card */}
+      <div style={{ padding: '20px 14px', borderTop: '1px solid #f1f5f9' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '12px 14px',
+          background: '#f8fafc',
+          borderRadius: 14,
+          border: '1px solid #e2e8f0',
+          marginBottom: 12
+        }}>
+          <div style={{
+            width: 38,
+            height: 38,
+            borderRadius: 12,
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+            flexShrink: 0
+          }}>
+            <Users size={16} color="#059669" />
+          </div>
+          <div style={{ overflow: 'hidden' }}>
+            <div style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {user?.full_name}
+            </div>
+            <div style={{ color: 'var(--text-subtle)', fontSize: 11, textTransform: 'capitalize', fontWeight: 600 }}>
+              {user?.role} User
+            </div>
           </div>
         </div>
-        <button onClick={logout} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, color: '#ef4444', fontSize: 12, cursor: 'pointer' }}><LogOut size={14} /> Sign Out</button>
+        <button
+          onClick={logout}
+          className="btn btn-danger"
+          style={{ width: '100%', padding: '10px 0', fontSize: 13, borderRadius: 10, gap: 8 }}
+        >
+          <LogOut size={16} /> Sign Out
+        </button>
       </div>
     </div>
   );
@@ -503,13 +867,13 @@ function Sidebar({ currentPage, onNavigate }) {
 
 function AppShell() {
   const [page, setPage] = useState('dashboard');
-  const pages = { dashboard: DashboardPage, reports: ReportsPage, tokens: TokensPage };
+  const pages = { dashboard: DashboardPage, reports: ReportsPage, staff: StaffReportsQueue, tokens: TokensPage };
   const Page = pages[page] || DashboardPage;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0f172a' }}>
+    <div className="app-shell">
       <Sidebar currentPage={page} onNavigate={setPage} />
-      <main style={{ flex: 1, marginLeft: 256, padding: 32 }}>
+      <main className="main-content">
         <Page />
       </main>
     </div>
