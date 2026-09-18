@@ -16,7 +16,7 @@ class Report(Base):
     floor: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     area: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(20), default="Reported")
+    status: Mapped[str] = mapped_column(String(20), default="Submitted")
     verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     verified_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

@@ -35,7 +35,7 @@ class ReportService:
             floor=floor,
             area=area,
             description=description,
-            status="Reported",
+            status="Submitted",
         )
         return self.report_repo.create(report)
 
