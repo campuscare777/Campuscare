@@ -1,6 +1,44 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle, Clock, AlertCircle, ShieldCheck, History, ChevronRight, Filter, Eye, RefreshCw, X, Coins } from 'lucide-react';
+import { CheckCircle, Clock, AlertCircle, ShieldCheck, History, ChevronRight, Filter, RefreshCw, X, Coins, Bell } from 'lucide-react';
 import { reportsAPI } from './api';
+
+// AC2: Toast notification component shown when report is Resolved (reporter notified)
+function ToastNotification({ toast, onDismiss }) {
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(onDismiss, 5000);
+    return () => clearTimeout(t);
+  }, [toast]);
+  if (!toast) return null;
+  return (
+    <div
+      id="staff-toast-notification"
+      style={{
+        position: 'fixed', bottom: 32, right: 32, zIndex: 9999,
+        background: toast.type === 'resolved' ? 'linear-gradient(135deg,#059669,#047857)' :
+                    toast.type === 'verified' ? 'linear-gradient(135deg,#7c3aed,#6d28d9)' :
+                    'linear-gradient(135deg,#dc2626,#b91c1c)',
+        color: '#fff', borderRadius: 16, padding: '18px 24px',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.22)', minWidth: 320, maxWidth: 420,
+        display: 'flex', alignItems: 'flex-start', gap: 14,
+        animation: 'slideInRight 0.3s ease',
+      }}
+    >
+      <div style={{ marginTop: 2 }}>
+        {toast.type === 'resolved' ? <Bell size={22} /> :
+         toast.type === 'verified' ? <ShieldCheck size={22} /> :
+         <AlertCircle size={22} />}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontWeight: 800, fontSize: 15, marginBottom: 4 }}>{toast.title}</div>
+        <div style={{ fontSize: 13, opacity: 0.92, lineHeight: 1.5 }}>{toast.message}</div>
+      </div>
+      <button onClick={onDismiss} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: 8, padding: 4, marginTop: -2 }}>
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
 
 export default function StaffReportsQueue({ onReportUpdated }) {
   const [reports, setReports] = useState([]);
@@ -11,7 +49,10 @@ export default function StaffReportsQueue({ onReportUpdated }) {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const [reasonInput, setReasonInput] = useState('');
+  const [activeReasonId, setActiveReasonId] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  // AC1 + AC2: Toast state for verify/resolve confirmations
+  const [toast, setToast] = useState(null);
 
   const loadReports = () => {
     setLoading(true);
@@ -42,11 +83,18 @@ export default function StaffReportsQueue({ onReportUpdated }) {
         res = await reportsAPI.updateStatus(reportId, 'Verified', reasonInput || 'Report verified by maintenance staff');
       }
       setReasonInput('');
+      setActiveReasonId(null);
       loadReports();
       if (selectedReport && selectedReport.id === reportId) {
         setSelectedReport(res.data);
       }
       if (onReportUpdated) onReportUpdated();
+      // AC1: Show verification success toast — status now 'Verified', eligible for reward
+      setToast({
+        type: 'verified',
+        title: 'Report Verified',
+        message: `Report #${reportId} is now Verified and eligible for Green Token reward.`,
+      });
     } catch (err) {
       const detail = err.response?.data?.detail;
       setErrorMessage(typeof detail === 'string' ? detail : 'Failed to verify report');
@@ -61,11 +109,26 @@ export default function StaffReportsQueue({ onReportUpdated }) {
     try {
       const res = await reportsAPI.updateStatus(reportId, newStatus, reasonInput || undefined);
       setReasonInput('');
+      setActiveReasonId(null);
       loadReports();
       if (selectedReport && selectedReport.id === reportId) {
         setSelectedReport(res.data);
       }
       if (onReportUpdated) onReportUpdated();
+      // AC2: Reporter notification toast when report is Resolved
+      if (newStatus === 'Resolved') {
+        setToast({
+          type: 'resolved',
+          title: 'Report Resolved & Reporter Notified',
+          message: `Report #${reportId} has been closed. The reporter has been notified and the report is now marked Resolved.`,
+        });
+      } else {
+        setToast({
+          type: 'verified',
+          title: `Status Updated to ${newStatus}`,
+          message: `Report #${reportId} status changed to ${newStatus} successfully.`,
+        });
+      }
     } catch (err) {
       const detail = err.response?.data?.detail;
       setErrorMessage(typeof detail === 'string' ? detail : `Failed to update status to ${newStatus}`);
@@ -99,6 +162,9 @@ export default function StaffReportsQueue({ onReportUpdated }) {
 
   return (
     <div>
+      {/* AC1 + AC2: Toast notification overlay */}
+      <ToastNotification toast={toast} onDismiss={() => setToast(null)} />
+
       {/* Header & Filter Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 14 }}>
         <div>
@@ -106,26 +172,29 @@ export default function StaffReportsQueue({ onReportUpdated }) {
             <ShieldCheck color="#7c3aed" size={26} /> Staff Maintenance Queue & Verification
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 6, fontWeight: 500 }}>
-            Verify issues & manage report status lifecycle: Reported → Verified → In Progress → Resolved
+            Verify issues & manage report status lifecycle: Submitted/Reported → Verified → In Progress → Resolved
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Filter size={16} color="var(--text-subtle)" />
           <select
+            id="staff-queue-filter"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="form-select"
             style={{ width: 'auto', padding: '9px 16px' }}
           >
             <option value="">All Statuses</option>
+            {/* AC1: 'Submitted' is the initial state — must be visible to staff */}
+            <option value="Submitted">Submitted (Pending Verification)</option>
             <option value="Reported">Reported (Unverified)</option>
             <option value="Verified">Verified</option>
             <option value="In Progress">In Progress</option>
             <option value="Resolved">Resolved</option>
             <option value="Rejected">Rejected</option>
           </select>
-          <button onClick={loadReports} className="btn btn-outline" style={{ padding: '9px 16px' }}>
+          <button id="staff-queue-refresh" onClick={loadReports} className="btn btn-outline" style={{ padding: '9px 16px' }}>
             <RefreshCw size={15} /> Refresh Queue
           </button>
         </div>
@@ -223,23 +292,44 @@ export default function StaffReportsQueue({ onReportUpdated }) {
                 )}
 
                 {/* Lifecycle Action Bar */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: 14, flexWrap: 'wrap', gap: 12 }}>
-                  <div>
+                <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: 14 }}>
+                  {/* Verification status label */}
+                  <div style={{ marginBottom: 12 }}>
                     {isUnverified ? (
                       <span style={{ color: '#d97706', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        ⚠️ Pending Staff Verification
+                        Pending Staff Verification
+                      </span>
+                    ) : r.status === 'Resolved' ? (
+                      <span id={`report-${r.id}-resolved-label`} style={{ color: '#059669', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <CheckCircle size={14} /> Resolved - Reporter Notified
                       </span>
                     ) : (
                       <span style={{ color: '#059669', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        ✓ Verified & Active in Maintenance Workflow
+                        <ShieldCheck size={14} /> Verified & Active in Maintenance Workflow
                       </span>
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {/* Action 1: Verify Report */}
+                  {/* Optional reason input — shown when expanded for a report */}
+                  {activeReasonId === r.id && (
+                    <div style={{ marginBottom: 12 }}>
+                      <input
+                        id={`reason-input-${r.id}`}
+                        type="text"
+                        placeholder="Optional: Add a note or reason for this action..."
+                        value={reasonInput}
+                        onChange={(e) => setReasonInput(e.target.value)}
+                        className="form-input"
+                        style={{ fontSize: 13, padding: '9px 14px', borderRadius: 10 }}
+                      />
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    {/* AC1: Verify Report button — only shown for Submitted/Reported */}
                     {isUnverified && (
                       <button
+                        id={`verify-btn-${r.id}`}
                         onClick={() => handleVerify(r.id)}
                         disabled={actionLoading === r.id}
                         className="btn btn-primary"
@@ -249,9 +339,10 @@ export default function StaffReportsQueue({ onReportUpdated }) {
                       </button>
                     )}
 
-                    {/* Action 2: Start Progress */}
+                    {/* Start In Progress */}
                     {r.status === 'Verified' && (
                       <button
+                        id={`progress-btn-${r.id}`}
                         onClick={() => handleStatusChange(r.id, 'In Progress')}
                         disabled={actionLoading === r.id}
                         className="btn btn-secondary"
@@ -261,9 +352,10 @@ export default function StaffReportsQueue({ onReportUpdated }) {
                       </button>
                     )}
 
-                    {/* Action 3: Mark Resolved */}
+                    {/* AC2: Mark Resolved — triggers reporter notification toast */}
                     {(r.status === 'Verified' || r.status === 'In Progress') && (
                       <button
+                        id={`resolve-btn-${r.id}`}
                         onClick={() => handleStatusChange(r.id, 'Resolved')}
                         disabled={actionLoading === r.id}
                         className="btn btn-primary"
@@ -273,15 +365,28 @@ export default function StaffReportsQueue({ onReportUpdated }) {
                       </button>
                     )}
 
-                    {/* Reject Option */}
+                    {/* Reject */}
                     {r.status !== 'Resolved' && r.status !== 'Rejected' && (
                       <button
+                        id={`reject-btn-${r.id}`}
                         onClick={() => handleStatusChange(r.id, 'Rejected')}
                         disabled={actionLoading === r.id}
                         className="btn btn-danger"
                         style={{ padding: '8px 14px', fontSize: 12 }}
                       >
                         Reject
+                      </button>
+                    )}
+
+                    {/* Toggle reason input */}
+                    {r.status !== 'Resolved' && r.status !== 'Rejected' && (
+                      <button
+                        id={`note-btn-${r.id}`}
+                        onClick={() => setActiveReasonId(activeReasonId === r.id ? null : r.id)}
+                        className="btn btn-outline"
+                        style={{ padding: '8px 12px', fontSize: 12 }}
+                      >
+                        {activeReasonId === r.id ? 'Hide Note' : '+ Add Note'}
                       </button>
                     )}
                   </div>
