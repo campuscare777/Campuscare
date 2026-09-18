@@ -65,8 +65,13 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
     e.preventDefault();
     setErrorMessage('');
 
-    if (!formData.photo || !formData.location.trim()) {
-      setErrorMessage('Both a photo and a location are required to submit a maintenance report.');
+    if (!formData.photo) {
+      setErrorMessage('Photo is required. Please attach a photo of the maintenance issue.');
+      return;
+    }
+
+    if (!formData.location || !formData.location.trim()) {
+      setErrorMessage('Location is required. Please select or specify a campus location.');
       return;
     }
 
@@ -284,7 +289,7 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
           )}
           <button
             type="submit"
-            disabled={submitting || !formData.photo || !formData.location}
+            disabled={submitting}
             className="btn btn-primary"
             style={{ padding: '12px 28px' }}
           >
