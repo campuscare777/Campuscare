@@ -106,8 +106,10 @@ def update_status(
 ):
     if current_user.role not in ["maintenance", "admin"]:
         raise HTTPException(status_code=403, detail="Only maintenance team can update status")
+    if not request.status or not str(request.status).strip():
+        raise HTTPException(status_code=400, detail="status field is required")
     service = ReportService(db)
-    report = service.update_status(report_id, request.status, current_user.id, request.reason)
+    report = service.update_status(report_id, request.status.strip(), current_user.id, request.reason)
     return ReportResponse.model_validate(report)
 
 
