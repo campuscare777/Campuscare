@@ -204,8 +204,9 @@ def test_scrum02_ui001():
 if __name__ == "__main__":
     try:
         test_scrum02_ui001()
-    except ConnectionRefusedError:
-        print("[FAIL] Backend server not running. Start uvicorn first: uvicorn app.main:app --port 8000")
+    except (ConnectionRefusedError, urllib.error.URLError):
+        print("\n[FAIL] Backend server is not running!")
+        print("[ACTION] Please start the backend in a separate terminal: uvicorn app.main:app --reload")
         sys.exit(1)
     except AssertionError as e:
         print(f"[FAIL] {e}")

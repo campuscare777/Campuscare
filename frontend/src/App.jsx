@@ -49,6 +49,7 @@ import {
 import { authAPI, reportsAPI, tokensAPI, rewardsAPI, dashboardAPI } from './api';
 import MaintenanceReportForm from './MaintenanceReportForm';
 import StaffReportsQueue from './StaffReportsQueue';
+import StudentReportsView from './StudentReportsView';
 
 function LoginPage() {
   const { login, loading } = useAuth();
@@ -384,176 +385,30 @@ function DashboardPage() {
 
 function ReportsPage() {
   const { user } = useAuth();
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [selectedReport, setSelectedReport] = useState(null);
-  const [filter, setFilter] = useState('');
-  const [statusUpdate, setStatusUpdate] = useState({ status: '', reason: '' });
-  const [history, setHistory] = useState([]);
-
-  const loadReports = () => {
-    reportsAPI.list(filter || undefined).then(res => { setReports(res.data.reports); setLoading(false); });
-  };
-
-  useEffect(() => { loadReports(); }, [filter]);
-
-  const handleStatusUpdate = async (reportId) => {
-    if (!statusUpdate.status) return;
-    try {
-      await reportsAPI.updateStatus(reportId, statusUpdate.status, statusUpdate.reason);
-      setSelectedReport(null);
-      setStatusUpdate({ status: '', reason: '' });
-      loadReports();
-    } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to update status');
-    }
-  };
-
-  const viewHistory = async (reportId) => {
-    try {
-      const res = await reportsAPI.getHistory(reportId);
-      setHistory(res.data);
-    } catch (err) {
-      setHistory([]);
-    }
-  };
-
-  const statusStyles = (s) => ({
-    Reported: { bg: '#eff6ff', text: '#2563eb', border: '#bfdbfe' },
-    Submitted: { bg: '#eff6ff', text: '#2563eb', border: '#bfdbfe' },
-    Verified: { bg: '#f5f3ff', text: '#7c3aed', border: '#ddd6fe' },
-    'In Progress': { bg: '#fffbeb', text: '#d97706', border: '#fde68a' },
-    Resolved: { bg: '#ecfdf5', text: '#059669', border: '#a7f3d0' },
-    Rejected: { bg: '#fef2f2', text: '#dc2626', border: '#fecaca' }
-  }[s] || { bg: '#f8fafc', text: '#64748b', border: '#e2e8f0' });
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const isMaintenance = user?.role === 'maintenance' || user?.role === 'admin';
 
   if (isMaintenance) {
-    return <StaffReportsQueue onReportUpdated={loadReports} />;
+    return <StaffReportsQueue onReportUpdated={() => setRefreshKey((k) => k + 1)} />;
   }
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
-        <div>
-          <h2 style={{ color: 'var(--text-main)', fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>My Submitted Reports</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 6, fontWeight: 500 }}>Submit cleanliness and campus maintenance issues to earn Green Tokens</p>
-        </div>
-        <button onClick={() => setShowForm(true)} className="btn btn-primary" style={{ padding: '12px 24px' }}>
-          <Upload size={16} /> Report Maintenance Issue
-        </button>
-      </div>
-
-      {showForm && (
+      {showForm ? (
         <MaintenanceReportForm
           onCancel={() => setShowForm(false)}
-          onSuccess={() => loadReports()}
+          onSuccess={() => {
+            setShowForm(false);
+            setRefreshKey((k) => k + 1);
+          }}
         />
-      )}
-
-      {selectedReport && (
-        <div className="glass-card" style={{ marginBottom: 28, padding: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <button onClick={() => { setSelectedReport(null); setHistory([]); }} style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: 'var(--text-main)', cursor: 'pointer', padding: 8, borderRadius: 10, display: 'flex', alignItems: 'center' }}>
-                <ArrowLeft size={18} />
-              </button>
-              <h3 style={{ color: 'var(--text-main)', fontSize: 18, fontWeight: 800, margin: 0 }}>Report #{selectedReport.id}</h3>
-              {(() => {
-                const st = statusStyles(selectedReport.status);
-                return (
-                  <span style={{ padding: '4px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: st.bg, color: st.text, border: `1px solid ${st.border}` }}>
-                    {selectedReport.status}
-                  </span>
-                );
-              })()}
-            </div>
-            <button onClick={() => viewHistory(selectedReport.id)} className="btn btn-secondary" style={{ fontSize: 13, padding: '8px 16px', gap: 6 }}>
-              <History size={15} /> View Audit History
-            </button>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20, fontSize: 13 }}>
-            {[['Location', selectedReport.location], ['Building', selectedReport.building || '—'], ['Floor', selectedReport.floor || '—'], ['Area', selectedReport.area || '—']].map(([label, val]) => (
-              <div key={label} style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0' }}>
-                <span style={{ color: 'var(--text-subtle)', fontSize: 11, display: 'block', marginBottom: 4, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</span>
-                <span style={{ color: 'var(--text-main)', fontWeight: 700, fontSize: 14 }}>{val}</span>
-              </div>
-            ))}
-          </div>
-
-          {selectedReport.description && (
-            <div style={{ marginBottom: 20 }}>
-              <label className="form-label" style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Description</label>
-              <p style={{ color: 'var(--text-main)', fontSize: 14, padding: '14px 16px', background: '#f8fafc', borderRadius: 12, border: '1px solid #e2e8f0', lineHeight: 1.6 }}>
-                {selectedReport.description}
-              </p>
-            </div>
-          )}
-
-          {history.length > 0 && (
-            <div style={{ marginBottom: 20 }}>
-              <h4 style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 700, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Status Progression Log</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {history.map((h, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}>
-                    <span style={{ color: 'var(--text-subtle)', fontWeight: 500 }}>{new Date(h.changed_at).toLocaleString()}</span>
-                    <span className="badge badge-blue">{h.from_status}</span>
-                    <ChevronRight size={14} color="var(--text-subtle)" />
-                    <span className="badge badge-emerald">{h.to_status}</span>
-                    {h.reason && <span style={{ color: 'var(--text-muted)', fontSize: 12, marginLeft: 'auto', fontStyle: 'italic' }}>"{h.reason}"</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {loading ? (
-        <div style={{ color: 'var(--text-muted)', padding: 60, textAlign: 'center', fontSize: 14, fontWeight: 500 }}>Loading maintenance reports...</div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {reports.map((r) => {
-            const st = statusStyles(r.status);
-            return (
-              <div
-                key={r.id}
-                onClick={() => setSelectedReport(r)}
-                className="glass-card glass-card-interactive"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', cursor: 'pointer' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-                  <div style={{ width: 46, height: 46, borderRadius: 14, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #a7f3d0' }}>
-                    <FileText size={20} color="#059669" />
-                  </div>
-                  <div>
-                    <div style={{ color: 'var(--text-main)', fontSize: 15, fontWeight: 800 }}>Report #{r.id} &mdash; {r.location}</div>
-                    <div style={{ color: 'var(--text-subtle)', fontSize: 13, marginTop: 3, fontWeight: 500 }}>
-                      {r.building && `${r.building}`}{r.floor && `, ${r.floor} Floor`}{r.area && ` — ${r.area}`}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  <span style={{ padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700, background: st.bg, color: st.text, border: `1px solid ${st.border}` }}>
-                    {r.status}
-                  </span>
-                  <span style={{ color: 'var(--text-subtle)', fontSize: 12, fontWeight: 500 }}>{new Date(r.created_at).toLocaleDateString()}</span>
-                  <ChevronRight size={18} color="var(--text-subtle)" />
-                </div>
-              </div>
-            );
-          })}
-          {reports.length === 0 && (
-            <div className="glass-card" style={{ textAlign: 'center', padding: 60, color: 'var(--text-subtle)' }}>
-              <FileText size={48} color="#cbd5e1" style={{ marginBottom: 14 }} />
-              <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-main)' }}>No reports submitted yet</p>
-              <p style={{ fontSize: 13, marginTop: 6 }}>Click "Report Maintenance Issue" above to submit a new issue report.</p>
-            </div>
-          )}
-        </div>
+        <StudentReportsView
+          key={refreshKey}
+          onOpenReportForm={() => setShowForm(true)}
+        />
       )}
     </div>
   );
