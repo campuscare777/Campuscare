@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.models.report import Report, ReportStatusHistory
 from datetime import datetime, timedelta
+from typing import Optional
 
 
 class ReportRepository:
@@ -11,13 +12,30 @@ class ReportRepository:
     def get_by_id(self, report_id: int) -> Report | None:
         return self.db.query(Report).filter(Report.id == report_id).first()
 
-    def get_all(self, status: str = None, reporter_id: int = None) -> list[Report]:
+    def get_all(
+        self,
+        status: str = None,
+        reporter_id: int = None,
+        hostel_type: str = None,
+        category: str = None,
+        food_related: Optional[bool] = None,
+    ) -> list[Report]:
         query = self.db.query(Report)
         if status:
             query = query.filter(Report.status == status)
         if reporter_id:
             query = query.filter(Report.reporter_id == reporter_id)
+        if hostel_type:
+            query = query.filter(Report.hostel_type == hostel_type)
+        if category:
+            query = query.filter(Report.category == category)
+        if food_related is not None:
+            query = query.filter(Report.food_related == food_related)
         return query.order_by(Report.created_at.desc()).all()
+
+    def get_food_complaints(self) -> list[Report]:
+        """Convenience helper for the food/mess staff dashboard."""
+        return self.db.query(Report).filter(Report.food_related == True).order_by(Report.created_at.desc()).all()
 
     def count_by_status(self) -> dict[str, int]:
         results = self.db.query(Report.status, func.count(Report.id)).group_by(Report.status).all()
