@@ -11,6 +11,10 @@ class RewardCatalogService:
     def get_all_rewards(self) -> list[RewardCatalogItem]:
         return self.reward_repo.get_all_active()
 
+    def get_rewards_by_category(self, category: str) -> list[RewardCatalogItem]:
+        """Return active rewards filtered by category: Canteen / Laundry / Hostel Stores."""
+        return self.reward_repo.get_by_category(category)
+
     def get_reward(self, reward_id: int) -> RewardCatalogItem:
         reward = self.reward_repo.get_by_id(reward_id)
         if not reward:
