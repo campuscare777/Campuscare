@@ -1,3 +1,4 @@
+import uuid
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.repositories.token_repository import TokenRepository
@@ -43,14 +44,14 @@ class RewardRedemptionService:
         self.db = db
         self.token_repo = TokenRepository(db)
 
-    def redeem_reward(self, student_id: int, reward_id: int):
+    def redeem_reward(self, student_id: int, reward_id: int) -> dict:
         from app.repositories.reward_repository import RewardCatalogRepository
         reward_repo = RewardCatalogRepository(self.db)
         reward = reward_repo.get_by_id(reward_id)
         if not reward:
             raise HTTPException(status_code=404, detail="Reward not found")
         if not reward.is_active:
-            raise HTTPException(status_code=400, detail="Reward is no longer available")
+            raise HTTPException(status_code=400, detail="This reward is no longer available")
 
         balance = self.token_repo.get_or_create_balance(student_id)
         if balance.balance < reward.token_cost:
@@ -62,19 +63,63 @@ class RewardRedemptionService:
         balance.balance -= reward.token_cost
         self.token_repo.update_balance(balance)
 
+        # Generate a unique voucher reference for staff fulfillment
+        voucher_ref = str(uuid.uuid4()).upper()[:12]  # e.g. "A1B2-C3D4-E5F6"
+
         transaction = TokenTransaction(
             student_id=student_id,
             transaction_type="redeem",
             amount=reward.token_cost,
             related_reward_id=reward_id,
+            redemption_reference=voucher_ref,
+            fulfillment_status="Pending",
         )
         transaction = self.token_repo.add_transaction(transaction)
 
         return {
             "message": "Reward redeemed successfully",
             "reward_name": reward.name,
+            "reward_category": reward.category,
             "tokens_deducted": reward.token_cost,
             "remaining_balance": balance.balance,
             "transaction_id": transaction.id,
+            "voucher_reference": voucher_ref,
             "created_at": transaction.created_at,
+        }
+
+    def fulfill_redemption(self, voucher_reference: str, staff_id: int) -> dict:
+        """Staff calls this to mark a voucher as fulfilled after handing over the reward."""
+        tx = self.token_repo.get_by_redemption_reference(voucher_reference)
+        if not tx:
+            raise HTTPException(status_code=404, detail="Voucher reference not found")
+        if tx.fulfillment_status == "Fulfilled":
+            raise HTTPException(status_code=400, detail="This voucher has already been fulfilled")
+
+        self.token_repo.fulfill_transaction(tx)
+        return {
+            "message": "Redemption fulfilled successfully",
+            "voucher_reference": voucher_reference,
+            "transaction_id": tx.id,
+            "fulfilled_at": tx.fulfilled_at,
+        }
+
+    def lookup_redemption(self, voucher_reference: str) -> dict:
+        """Staff calls this to look up a voucher before fulfilling it."""
+        from app.repositories.reward_repository import RewardCatalogRepository
+        tx = self.token_repo.get_by_redemption_reference(voucher_reference)
+        if not tx:
+            raise HTTPException(status_code=404, detail="Voucher reference not found")
+
+        reward_repo = RewardCatalogRepository(self.db)
+        reward = reward_repo.get_by_id(tx.related_reward_id)
+
+        return {
+            "transaction_id": tx.id,
+            "voucher_reference": voucher_reference,
+            "reward_name": reward.name if reward else "Unknown",
+            "reward_category": reward.category if reward else "Unknown",
+            "tokens_deducted": tx.amount,
+            "fulfillment_status": tx.fulfillment_status or "Pending",
+            "created_at": tx.created_at,
+            "fulfilled_at": tx.fulfilled_at,
         }

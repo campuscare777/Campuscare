@@ -41,6 +41,21 @@ class TokenRepository:
             TokenTransaction.transaction_type == "award"
         ).first()
 
+    def get_by_redemption_reference(self, reference: str) -> TokenTransaction | None:
+        """Look up a voucher by its UUID reference string (used by fulfillment staff)."""
+        return self.db.query(TokenTransaction).filter(
+            TokenTransaction.redemption_reference == reference
+        ).first()
+
+    def fulfill_transaction(self, transaction: TokenTransaction) -> TokenTransaction:
+        """Mark a redemption voucher as fulfilled."""
+        from datetime import datetime
+        transaction.fulfillment_status = "Fulfilled"
+        transaction.fulfilled_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(transaction)
+        return transaction
+
     def total_awarded(self) -> int:
         result = self.db.query(func.sum(TokenTransaction.amount)).filter(
             TokenTransaction.transaction_type == "award"
