@@ -14,12 +14,12 @@ class DashboardService:
     def get_dashboard_data(self) -> dict:
         kpis_raw = self.dashboard_repo.get_kpis()
         kpis = [
-            {"title": "Total Reports", "value": kpis_raw["total_reports"], "icon": "FileText"},
-            {"title": "Open Reports", "value": kpis_raw["open_reports"], "icon": "AlertCircle"},
-            {"title": "Resolved Reports", "value": kpis_raw["resolved_reports"], "icon": "CheckCircle"},
+            {"title": "Total Complaints", "value": kpis_raw["total_reports"], "icon": "FileText"},
+            {"title": "Open Complaints", "value": kpis_raw["open_reports"], "icon": "AlertCircle"},
+            {"title": "Resolved Complaints", "value": kpis_raw["resolved_reports"], "icon": "CheckCircle"},
             {"title": "Green Tokens Awarded", "value": kpis_raw["tokens_awarded"], "icon": "Coins"},
             {"title": "Rewards Redeemed", "value": kpis_raw["rewards_redeemed"], "icon": "Gift"},
-            {"title": "Active Users", "value": kpis_raw["active_users"], "icon": "Users"},
+            {"title": "Active Residents", "value": kpis_raw["active_users"], "icon": "Users"},
         ]
 
         trend = self.report_repo.get_trend_data(days=7)
