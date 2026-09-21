@@ -1,25 +1,28 @@
 import { useState, useEffect } from 'react';
-import { Upload, MapPin, Building, Layers, AlertCircle, CheckCircle, X, Send, FileText, ArrowLeft, Image as ImageIcon } from 'lucide-react';
+import { Upload, MapPin, AlertCircle, CheckCircle, X, Send, FileText, Home } from 'lucide-react';
 import { reportsAPI } from './api';
 
-const DEFAULT_LOCATIONS = [
-  { id: 'library', name: 'Library', building: 'Main Library Block', zone: 'Academic Zone' },
-  { id: 'hostel_a', name: 'Hostel Block A', building: 'Hostel Block A', zone: 'Residential Zone' },
-  { id: 'canteen', name: 'Canteen / Cafeteria', building: 'Student Center', zone: 'Dining Zone' },
-  { id: 'auditorium', name: 'Main Auditorium', building: 'Auditorium Block', zone: 'Central Zone' },
-  { id: 'parking_lot', name: 'Parking Lot', building: 'Parking Complex', zone: 'Outer Zone' },
-  { id: 'sports_complex', name: 'Sports Complex', building: 'Sports Center', zone: 'Recreation Zone' },
-  { id: 'science_block', name: 'Science Block', building: 'Block S', zone: 'Academic Zone' },
-  { id: 'admin_building', name: 'Admin Building', building: 'Admin Block', zone: 'Admin Zone' },
+const HOSTEL_TYPES = ['Boys Hostel', 'Girls Hostel', 'NRI Hostel'];
+
+const HOSTEL_LOCATIONS = {
+  'Boys Hostel':  { blocks: ['Block A', 'Block B', 'Block C', 'Block D'], floors: ['Ground Floor', '1st Floor', '2nd Floor', '3rd Floor'], areas: ['Lobby', 'Corridor', 'Washroom', 'Common Room', 'Dining Area', 'Gym', 'Study Room'] },
+  'Girls Hostel': { blocks: ['Block E', 'Block F', 'Block G'], floors: ['Ground Floor', '1st Floor', '2nd Floor', '3rd Floor'], areas: ['Lobby', 'Corridor', 'Washroom', 'Common Room', 'Dining Area', 'Study Room'] },
+  'NRI Hostel':   { blocks: ['NRI Wing A', 'NRI Wing B'], floors: ['Ground Floor', '1st Floor', '2nd Floor'], areas: ['Lobby', 'Corridor', 'Washroom', 'Common Room', 'Dining Area'] },
+};
+
+const COMPLAINT_CATEGORIES = [
+  'Electrical', 'Plumbing', 'Cleanliness', 'Food/Mess',
+  'Internet/Network', 'Furniture', 'Pest Control', 'Water Supply', 'Other',
 ];
 
 export default function MaintenanceReportForm({ onCancel, onSuccess }) {
-  const [locations, setLocations] = useState(DEFAULT_LOCATIONS);
+  const [hostelConfig, setHostelConfig] = useState(HOSTEL_LOCATIONS);
   const [formData, setFormData] = useState({
-    location: '',
+    hostel_type: '',
     building: '',
     floor: '',
     area: '',
+    category: '',
     description: '',
     photo: null,
   });
@@ -29,25 +32,39 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
   const [confirmedReport, setConfirmedReport] = useState(null);
 
   useEffect(() => {
-    reportsAPI
-      .getLocations()
+    // Try to fetch hostel config from backend; fall back to defaults
+    reportsAPI.getHostelConfig()
       .then((res) => {
-        if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-          setLocations(res.data);
+        if (res.data?.hostel_locations) {
+          const locs = res.data.hostel_locations;
+          const normalized = {};
+          Object.keys(locs).forEach((key) => {
+            normalized[key] = {
+              blocks: locs[key].blocks || [],
+              floors: locs[key].floors || [],
+              areas: locs[key].areas || locs[key].common_areas || [],
+              common_areas: locs[key].common_areas || locs[key].areas || [],
+            };
+          });
+          setHostelConfig(normalized);
         }
       })
-      .catch(() => {
-        // Fallback to DEFAULT_LOCATIONS
-      });
+      .catch(() => {});
   }, []);
 
-  const handleLocationChange = (e) => {
-    const locName = e.target.value;
-    const foundLoc = locations.find((l) => l.name === locName);
+  const selectedHostel = formData.hostel_type ? (hostelConfig[formData.hostel_type] || null) : null;
+  const blocks = selectedHostel?.blocks || [];
+  const floors = selectedHostel?.floors || [];
+  const areas = selectedHostel?.areas || selectedHostel?.common_areas || [];
+
+  const handleHostelTypeChange = (e) => {
+    const val = e.target.value;
     setFormData((prev) => ({
       ...prev,
-      location: locName,
-      building: foundLoc ? foundLoc.building : prev.building,
+      hostel_type: val,
+      building: '',
+      floor: '',
+      area: '',
     }));
     setErrorMessage('');
   };
@@ -65,24 +82,27 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
     e.preventDefault();
     setErrorMessage('');
 
-    if (!formData.photo) {
-      setErrorMessage('Photo is required. Please attach a photo of the maintenance issue.');
+    if (!formData.hostel_type) {
+      setErrorMessage('Please select a hostel type.');
+      return;
+    }
+    if (!formData.category) {
+      setErrorMessage('Please select a complaint category.');
       return;
     }
 
-    if (!formData.location || !formData.location.trim()) {
-      setErrorMessage('Location is required. Please select or specify a campus location.');
-      return;
-    }
+    const location = [formData.building, formData.area].filter(Boolean).join(', ') || formData.hostel_type;
 
     setSubmitting(true);
     const payload = new FormData();
-    payload.append('photo', formData.photo);
-    payload.append('location', formData.location);
+    payload.append('hostel_type', formData.hostel_type);
+    payload.append('location', location);
+    payload.append('category', formData.category);
     if (formData.building) payload.append('building', formData.building);
-    if (formData.floor) payload.append('floor', formData.floor);
-    if (formData.area) payload.append('area', formData.area);
+    if (formData.floor)    payload.append('floor', formData.floor);
+    if (formData.area)     payload.append('area', formData.area);
     if (formData.description) payload.append('description', formData.description);
+    if (formData.photo)    payload.append('photo', formData.photo);
 
     try {
       const res = await reportsAPI.create(payload);
@@ -90,7 +110,7 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
       if (onSuccess) onSuccess(res.data);
     } catch (err) {
       const detail = err.response?.data?.detail;
-      setErrorMessage(typeof detail === 'string' ? detail : 'Failed to submit report. Please check required fields.');
+      setErrorMessage(typeof detail === 'string' ? detail : 'Failed to submit complaint. Please check required fields.');
     } finally {
       setSubmitting(false);
     }
@@ -98,19 +118,20 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
 
   const resetForm = () => {
     setConfirmedReport(null);
-    setFormData({ location: '', building: '', floor: '', area: '', description: '', photo: null });
+    setFormData({ hostel_type: '', building: '', floor: '', area: '', category: '', description: '', photo: null });
     setPhotoPreview(null);
     setErrorMessage('');
   };
 
+  // ─── Success screen ────────────────────────────────────────────────
   if (confirmedReport) {
     return (
       <div className="glass-card" style={{ maxWidth: 640, margin: '0 auto 28px', padding: 36, textAlign: 'center' }}>
         <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#ecfdf5', border: '1px solid #a7f3d0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
           <CheckCircle size={36} color="#059669" />
         </div>
-        <h3 style={{ color: 'var(--text-main)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Report Submitted Successfully!</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 24px' }}>Your maintenance issue report has been registered and sent for verification.</p>
+        <h3 style={{ color: 'var(--text-main)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Complaint Submitted Successfully!</h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14, margin: '0 0 24px' }}>Your hostel complaint has been registered and sent to the warden for verification.</p>
 
         <div style={{ background: '#f8fafc', borderRadius: 16, padding: 24, border: '1px solid #e2e8f0', marginBottom: 28, textAlign: 'left' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 14, marginBottom: 14, borderBottom: '1px solid #e2e8f0' }}>
@@ -121,19 +142,23 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, fontSize: 13, marginBottom: 16 }}>
             <div>
               <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: 11, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Status</span>
-              <span className="badge badge-emerald">{confirmedReport.status || 'Reported'}</span>
+              <span className="badge badge-emerald">{confirmedReport.status || 'Submitted'}</span>
             </div>
             <div>
               <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: 11, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Submitted At</span>
               <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{new Date(confirmedReport.created_at).toLocaleString()}</span>
             </div>
             <div>
-              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: 11, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Location</span>
-              <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{confirmedReport.location}</span>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: 11, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Hostel</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{confirmedReport.hostel_type}</span>
             </div>
             <div>
-              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: 11, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Building</span>
-              <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{confirmedReport.building || 'N/A'}</span>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: 11, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Category</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{confirmedReport.category}</span>
+            </div>
+            <div>
+              <span style={{ color: 'var(--text-subtle)', display: 'block', fontSize: 11, marginBottom: 4, fontWeight: 700, textTransform: 'uppercase' }}>Location</span>
+              <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>{confirmedReport.location}</span>
             </div>
           </div>
 
@@ -147,11 +172,11 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
 
         <div style={{ display: 'flex', gap: 14 }}>
           <button onClick={resetForm} className="btn btn-outline" style={{ flex: 1, padding: '12px 0' }}>
-            Submit Another Report
+            Submit Another Complaint
           </button>
           {onCancel && (
             <button onClick={onCancel} className="btn btn-primary" style={{ flex: 1, padding: '12px 0' }}>
-              Done / View Reports
+              Done / View Complaints
             </button>
           )}
         </div>
@@ -159,16 +184,17 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
     );
   }
 
+  // ─── Form ────────────────────────────────────────────────────────────
   return (
     <div className="glass-card" style={{ marginBottom: 28, padding: 32 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 44, height: 44, borderRadius: 14, background: '#ecfdf5', border: '1px solid #a7f3d0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <FileText size={22} color="#059669" />
+            <Home size={22} color="#059669" />
           </div>
           <div>
-            <h3 style={{ color: 'var(--text-main)', fontSize: 18, fontWeight: 800, margin: 0 }}>Report Campus Maintenance & Cleanliness Issue</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: '2px 0 0', fontWeight: 500 }}>Upload a photo and details to report an issue on campus</p>
+            <h3 style={{ color: 'var(--text-main)', fontSize: 18, fontWeight: 800, margin: 0 }}>Report Hostel Complaint</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: '2px 0 0', fontWeight: 500 }}>Fill in the hostel details and describe the issue. Photo is optional but recommended.</p>
           </div>
         </div>
         {onCancel && (
@@ -187,68 +213,92 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
 
       <form onSubmit={handleSubmit}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
-          {/* Location Selection */}
+
+          {/* Step 1: Hostel Type */}
           <div className="form-group" style={{ margin: 0 }}>
             <label className="form-label">
-              Issue Location <span style={{ color: '#dc2626' }}>*</span>
+              Hostel <span style={{ color: '#dc2626' }}>*</span>
             </label>
             <select
-              value={formData.location}
-              onChange={handleLocationChange}
+              id="hostel-type-select"
+              value={formData.hostel_type}
+              onChange={handleHostelTypeChange}
               className="form-select"
             >
-              <option value="">-- Select Campus Location --</option>
-              {locations.map((loc) => (
-                <option key={loc.id || loc.name} value={loc.name}>
-                  {loc.name} ({loc.building})
-                </option>
-              ))}
+              <option value="">-- Select Hostel --</option>
+              {HOSTEL_TYPES.map((h) => <option key={h} value={h}>{h}</option>)}
             </select>
           </div>
 
-          {/* Building */}
-          <div className="form-group" style={{ margin: 0 }}>
-            <label className="form-label">Building / Block (Optional)</label>
-            <input
-              type="text"
-              value={formData.building}
-              onChange={(e) => setFormData({ ...formData, building: e.target.value })}
-              placeholder="e.g. Block A"
-              className="form-input"
-            />
-          </div>
-
-          {/* Floor & Area */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Floor</label>
-              <input
-                type="text"
-                value={formData.floor}
-                onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
-                placeholder="e.g. 1st Floor"
-                className="form-input"
-              />
-            </div>
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">Area</label>
-              <input
-                type="text"
-                value={formData.area}
-                onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                placeholder="e.g. Washroom"
-                className="form-input"
-              />
-            </div>
-          </div>
-
-          {/* Photo File Upload Box */}
+          {/* Complaint Category */}
           <div className="form-group" style={{ margin: 0 }}>
             <label className="form-label">
-              Upload Photo <span style={{ color: '#dc2626' }}>*</span>
+              Complaint Category <span style={{ color: '#dc2626' }}>*</span>
+            </label>
+            <select
+              id="complaint-category-select"
+              value={formData.category}
+              onChange={(e) => { setFormData({ ...formData, category: e.target.value }); setErrorMessage(''); }}
+              className="form-select"
+            >
+              <option value="">-- Select Category --</option>
+              {COMPLAINT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          {/* Step 2: Block (depends on hostel type) */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label">Block / Wing</label>
+            <select
+              id="hostel-block-select"
+              value={formData.building}
+              onChange={(e) => setFormData({ ...formData, building: e.target.value })}
+              className="form-select"
+              disabled={!selectedHostel}
+            >
+              <option value="">{selectedHostel ? '-- Select Block / Wing --' : '-- First Select Hostel --'}</option>
+              {blocks.map((b) => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </div>
+
+          {/* Step 3: Floor */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label">Floor</label>
+            <select
+              id="hostel-floor-select"
+              value={formData.floor}
+              onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
+              className="form-select"
+              disabled={!selectedHostel}
+            >
+              <option value="">{selectedHostel ? '-- Select Floor --' : '-- First Select Hostel --'}</option>
+              {floors.map((f) => <option key={f} value={f}>{f}</option>)}
+            </select>
+          </div>
+
+          {/* Area */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label">Area / Room</label>
+            <select
+              id="hostel-area-select"
+              value={formData.area}
+              onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+              className="form-select"
+              disabled={!selectedHostel}
+            >
+              <option value="">{selectedHostel ? '-- Select Area / Room --' : '-- First Select Hostel --'}</option>
+              {areas.map((a) => <option key={a} value={a}>{a}</option>)}
+            </select>
+          </div>
+
+          {/* Photo (optional) */}
+          <div className="form-group" style={{ margin: 0 }}>
+            <label className="form-label">
+              Attach Photo <span style={{ color: '#64748b', fontWeight: 500 }}>(optional, recommended)</span>
             </label>
             <input
               type="file"
+              id="complaint-photo-input"
               accept="image/*"
               onChange={handlePhotoChange}
               className="form-input"
@@ -258,18 +308,18 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
 
           {/* Description */}
           <div style={{ gridColumn: '1 / -1' }} className="form-group">
-            <label className="form-label">Description / Issue Details (Optional)</label>
+            <label className="form-label">Description / Details (Optional)</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Describe the issue, cleanliness concern or maintenance requirement in detail..."
+              placeholder="Describe the issue in detail — what happened, how long it has been occurring, etc."
               rows={3}
               className="form-textarea"
             />
           </div>
         </div>
 
-        {/* Photo Preview Card */}
+        {/* Photo Preview */}
         {photoPreview && (
           <div style={{ marginBottom: 20, padding: 14, background: '#f8fafc', borderRadius: 14, border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 16 }}>
             <img src={photoPreview} alt="Selected preview" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 10, border: '1px solid #cbd5e1' }} />
@@ -290,14 +340,16 @@ export default function MaintenanceReportForm({ onCancel, onSuccess }) {
           <button
             type="submit"
             disabled={submitting}
+            id="submit-complaint-btn"
             className="btn btn-primary"
             style={{ padding: '12px 28px' }}
           >
             <Send size={16} />
-            {submitting ? 'Submitting Report...' : 'Submit Report'}
+            {submitting ? 'Submitting...' : 'Submit Complaint'}
           </button>
         </div>
       </form>
     </div>
   );
 }
+
