@@ -4,26 +4,34 @@ from typing import Optional, List
 
 
 class ReportCreate(BaseModel):
-    location: str
+    """Input for creating a hostel complaint."""
+    hostel_type: str                      # "Boys Hostel" | "Girls Hostel" | "NRI Hostel"
+    location: str                         # descriptive location (block + area)
     building: Optional[str] = None
     floor: Optional[str] = None
     area: Optional[str] = None
+    category: str                         # Electrical / Plumbing / Food/Mess …
     description: Optional[str] = None
-    photo_path: str
+    photo_path: Optional[str] = None      # photo is optional in HostelCare
 
 
 class ReportResponse(BaseModel):
     id: int
     reporter_id: int
-    photo_path: str
+    hostel_type: Optional[str] = None
     location: str
-    building: Optional[str]
-    floor: Optional[str]
-    area: Optional[str]
-    description: Optional[str]
+    building: Optional[str] = None
+    floor: Optional[str] = None
+    area: Optional[str] = None
+    category: Optional[str] = None
+    food_related: bool = False
+    description: Optional[str] = None
+    photo_path: Optional[str] = None
     status: str
+    assigned_team: Optional[str] = None
     verified_at: Optional[datetime] = None
     verified_by_id: Optional[int] = None
+    resolved_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
     reporter_name: Optional[str] = None
@@ -31,7 +39,9 @@ class ReportResponse(BaseModel):
     @computed_field
     @property
     def verified(self) -> bool:
-        return self.verified_at is not None or self.status in ["Verified", "In Progress", "Resolved"]
+        return self.verified_at is not None or self.status in [
+            "Verified", "Assigned", "In Progress", "Resolved"
+        ]
 
     @computed_field
     @property
@@ -43,12 +53,21 @@ class ReportResponse(BaseModel):
 
 
 class StatusUpdateRequest(BaseModel):
+    """Generic status change (used by staff for In Progress, Assigned, etc.)."""
     status: Optional[str] = None
     reason: Optional[str] = None
 
 
 class VerifyRequest(BaseModel):
     reason: Optional[str] = None
+
+
+class RejectRequest(BaseModel):
+    reason: str   # mandatory per business rules
+
+
+class AssignRequest(BaseModel):
+    assigned_team: str
 
 
 class StatusHistoryResponse(BaseModel):
@@ -58,7 +77,7 @@ class StatusHistoryResponse(BaseModel):
     to_status: str
     changed_by_id: int
     changed_by_name: Optional[str] = None
-    reason: Optional[str]
+    reason: Optional[str] = None
     changed_at: datetime
 
     class Config:

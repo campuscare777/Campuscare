@@ -8,7 +8,7 @@ from app.api import auth, reports, tokens, dashboard
 
 init_db()
 
-app = FastAPI(title="Campus Maintenance Reporting", version="1.0.0")
+app = FastAPI(title="HostelCare – Hostel Complaint & Green Token Portal", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
