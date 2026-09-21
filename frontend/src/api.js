@@ -32,11 +32,28 @@ export const authAPI = {
 };
 
 export const reportsAPI = {
-  list: (status) => api.get('/reports', { params: status ? { status } : {} }),
+  /** List complaints with optional status, hostel_type, and category filters. */
+  list: (status, hostelType, category, foodRelated) => {
+    const params = {};
+    if (status)      params.status      = status;
+    if (hostelType)  params.hostel_type = hostelType;
+    if (category)    params.category    = category;
+    if (foodRelated !== undefined && foodRelated !== null) params.food_related = foodRelated;
+    return api.get('/reports', { params });
+  },
+  /** Return hostel types, per-hostel blocks, and complaint categories for dropdowns. */
+  getHostelConfig: () => api.get('/reports/hostel-config'),
+  /** Backward-compat: flat locations list */
   getLocations: () => api.get('/reports/locations'),
   get: (id) => api.get(`/reports/${id}`),
   create: (formData) => api.post('/reports', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   verify: (id, reason) => api.patch(`/reports/${id}/verify`, { reason }),
+  forwardToAdmin: (id, reason) => api.patch(`/reports/${id}/forward-to-admin`, { reason }),
+  adminVerify: (id, reason) => api.patch(`/reports/${id}/admin-verify`, { reason }),
+  completeWork: (id, reason) => api.patch(`/reports/${id}/complete-work`, { reason }),
+  adminResolve: (id, reason) => api.patch(`/reports/${id}/admin-resolve`, { reason }),
+  reject: (id, reason) => api.patch(`/reports/${id}/reject`, { reason }),
+  assign: (id, assigned_team) => api.patch(`/reports/${id}/assign`, { assigned_team }),
   updateStatus: (id, status, reason) => api.patch(`/reports/${id}/status`, { status, reason }),
   getHistory: (id) => api.get(`/reports/${id}/history`),
 };
@@ -47,8 +64,13 @@ export const tokensAPI = {
 };
 
 export const rewardsAPI = {
-  list: () => api.get('/rewards'),
+  /** List reward catalog, optionally filter by category: "Canteen" | "Laundry" | "Hostel Stores" */
+  list: (category) => api.get('/rewards', { params: category ? { category } : {} }),
   redeem: (id) => api.post(`/rewards/${id}/redeem`),
+  /** Staff: look up a voucher reference */
+  lookupRedemption: (voucherRef) => api.get(`/redemptions/${voucherRef}`),
+  /** Staff: mark a voucher as fulfilled */
+  fulfillRedemption: (voucherRef) => api.patch(`/redemptions/${voucherRef}/fulfill`),
 };
 
 export const dashboardAPI = {
