@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import annaUnivLogo from './assets/anna_university_logo.png';
 import {
   LayoutDashboard,
   FileText,
@@ -112,23 +113,27 @@ function LoginPage() {
       }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{
-            width: 64,
-            height: 64,
-            borderRadius: 20,
-            background: 'var(--primary-gradient)',
             display: 'flex',
             alignItems: 'center',
             justify: 'center',
-            margin: '0 auto 20px',
-            boxShadow: 'var(--shadow-glow)'
+            margin: '0 auto 18px',
           }}>
-            <Coins size={32} color="#white" />
+            <img
+              src={annaUnivLogo}
+              alt="Anna University Logo"
+              style={{
+                width: 92,
+                height: 92,
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.12))'
+              }}
+            />
           </div>
           <h1 style={{ color: 'var(--text-main)', fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
-            Campus Green
+            HostelCare
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 8, fontWeight: 500 }}>
-            Maintenance Reporting & Green Token Management
+            Hostel Complaint Reporting &amp; Green Token Management
           </p>
         </div>
 
@@ -187,12 +192,16 @@ function LoginPage() {
               <span className="badge badge-purple">Admin</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: 600 }}>maintenance1 / maint123</span>
-              <span className="badge badge-amber">Maintenance</span>
+              <span style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: 600 }}>warden1 / warden123</span>
+              <span className="badge badge-blue">Warden</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: 600 }}>student1 / student123</span>
-              <span className="badge badge-emerald">Student</span>
+              <span style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: 600 }}>food_staff1 / food123</span>
+              <span className="badge badge-amber">Food Staff</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: 600 }}>resident1 / resident123</span>
+              <span className="badge badge-emerald">Resident</span>
             </div>
           </div>
         </div>
@@ -255,7 +264,7 @@ function DashboardPage() {
       <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
           <h2 style={{ color: 'var(--text-main)', fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>Dashboard Overview</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 6, fontWeight: 500 }}>Real-time stats and maintenance status tracking</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 6, fontWeight: 500 }}>Real-time stats and hostel complaint resolution tracking</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '6px 14px', borderRadius: 999, fontSize: 12, color: '#059669', fontWeight: 600 }}>
           <div className="pulse-dot" /> Live System Active
@@ -334,7 +343,7 @@ function DashboardPage() {
 
         <div className="glass-card">
           <h3 style={{ color: 'var(--text-main)', fontSize: 15, fontWeight: 700, marginBottom: 20 }}>
-            Recent Maintenance Activity
+            Recent Hostel Complaints
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {data.recent_reports.map((r, i) => {
@@ -388,7 +397,7 @@ function ReportsPage() {
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const isMaintenance = user?.role === 'maintenance' || user?.role === 'admin';
+  const isMaintenance = ['warden', 'food_staff', 'maintenance', 'admin'].includes(user?.role);
 
   if (isMaintenance) {
     return <StaffReportsQueue onReportUpdated={() => setRefreshKey((k) => k + 1)} />;
@@ -437,7 +446,8 @@ function TokensPage() {
   const handleRedeem = async (rewardId) => {
     try {
       const res = await rewardsAPI.redeem(rewardId);
-      alert(`Redeemed: ${res.data.reward_name}. Remaining balance: ${res.data.remaining_balance} tokens`);
+      const code = res.data.voucher_reference || res.data.transaction_id;
+      alert(`Redeemed successfully!\n\nReward: ${res.data.reward_name}\nVoucher Reference: ${code}\nRemaining Balance: ${res.data.remaining_balance} tokens\n\nShow this voucher reference to staff at the redemption counter.`);
       const b = await tokensAPI.getBalance();
       setBalance(b.data);
       const h = await tokensAPI.getHistory();
@@ -451,23 +461,28 @@ function TokensPage() {
 
   const categoryColors = {
     canteen: { hex: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
-    printing: { hex: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
-    merchandise: { hex: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
-    transport: { hex: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+    Canteen: { hex: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
+    laundry: { hex: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
+    Laundry: { hex: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
+    'Hostel Stores': { hex: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
+    hostel_store: { hex: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
+    printing: { hex: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+    Printing: { hex: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+    merchandise: { hex: '#ec4899', bg: '#fdf2f8', border: '#fbcfe8' },
   };
 
   return (
     <div>
       <div style={{ marginBottom: 32 }}>
         <h2 style={{ color: 'var(--text-main)', fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>Green Tokens Wallet</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 6, fontWeight: 500 }}>Earn tokens by reporting verified campus maintenance issues and redeem rewards</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 6, fontWeight: 500 }}>Earn tokens by reporting verified hostel complaints and redeem at Canteen, Laundry, and Hostel Stores</p>
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 32 }}>
         {[
           ['balance', 'Token Balance'],
           ['history', 'Transaction History'],
-          ['rewards', 'Campus Rewards Store']
+          ['rewards', 'Hostel Rewards Store']
         ].map(([key, label]) => (
           <button
             key={key}
@@ -558,7 +573,12 @@ function TokensPage() {
                       <Coins size={16} /> {r.token_cost} Tokens
                     </div>
                   </div>
-                  <h4 style={{ color: 'var(--text-main)', fontSize: 17, fontWeight: 800, margin: '0 0 10px' }}>{r.name}</h4>
+                  <h4 style={{ color: 'var(--text-main)', fontSize: 17, fontWeight: 800, margin: '0 0 6px' }}>{r.name}</h4>
+                  {r.provider_location && (
+                    <div style={{ color: '#059669', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>
+                      📍 {r.provider_location}
+                    </div>
+                  )}
                   <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 20px', lineHeight: 1.6 }}>{r.description}</p>
                 </div>
                 <button
@@ -580,11 +600,11 @@ function TokensPage() {
 
 function Sidebar({ currentPage, onNavigate }) {
   const { user, logout } = useAuth();
+  const isStudent = user?.role === 'student';
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'reports', label: 'My Reports', icon: FileText },
-    ...(user?.role === 'maintenance' || user?.role === 'admin' ? [{ id: 'staff', label: 'Staff Verification Queue', icon: CheckCircle }] : []),
-    { id: 'tokens', label: 'Green Tokens', icon: Coins },
+    { id: 'reports', label: 'Hostel Complaints', icon: FileText },
+    ...(isStudent ? [{ id: 'tokens', label: 'Green Tokens', icon: Coins }] : []),
   ];
 
   return (
@@ -605,21 +625,27 @@ function Sidebar({ currentPage, onNavigate }) {
           <div style={{
             width: 44,
             height: 44,
-            borderRadius: 14,
-            background: 'var(--primary-gradient)',
+            borderRadius: 12,
+            background: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justify: 'center',
-            boxShadow: 'var(--shadow-glow)'
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            border: '1px solid #e2e8f0',
+            padding: 4
           }}>
-            <Coins size={22} color="#ffffff" />
+            <img
+              src={annaUnivLogo}
+              alt="Anna University"
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            />
           </div>
           <div>
             <div style={{ color: 'var(--text-main)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.3px' }}>
-              Campus Green
+              HostelCare
             </div>
             <div style={{ color: 'var(--text-subtle)', fontSize: 11, fontWeight: 600 }}>
-              Maintenance Portal
+              Resident & Staff Portal
             </div>
           </div>
         </div>
@@ -722,7 +748,7 @@ function Sidebar({ currentPage, onNavigate }) {
 
 function AppShell() {
   const [page, setPage] = useState('dashboard');
-  const pages = { dashboard: DashboardPage, reports: ReportsPage, staff: StaffReportsQueue, tokens: TokensPage };
+  const pages = { dashboard: DashboardPage, reports: ReportsPage, tokens: TokensPage };
   const Page = pages[page] || DashboardPage;
 
   return (
