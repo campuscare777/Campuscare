@@ -3,7 +3,7 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "Campus Maintenance Reporting"
+    APP_NAME: str = "HostelCare"
     ENVIRONMENT: str = "development"
     DATABASE_URL: str = "sqlite:///./app.db"
     SECRET_KEY: str = "dev-secret-key-change-in-production"
