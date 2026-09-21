@@ -11,6 +11,7 @@ import {
   Search,
   Upload,
   ArrowLeft,
+  ArrowRight,
   X,
   History,
   Coins,
@@ -70,16 +71,27 @@ export default function StudentReportsView({ onOpenReportForm }) {
           border: '#bfdbfe',
           icon: Clock,
           label: 'Submitted (Pending Review)',
-          desc: 'Your report has been received and is waiting for maintenance verification.',
+          desc: 'Your complaint has been received and is waiting for staff/warden verification.',
         };
-      case 'Verified':
+      case 'Verified by Food Staff':
+      case 'Verified by Warden':
         return {
           bg: '#f5f3ff',
           text: '#7c3aed',
           border: '#ddd6fe',
+          icon: ArrowRight,
+          label: status,
+          desc: 'Verified by staff and forwarded to Admin for token approval!',
+        };
+      case 'Admin Verified':
+      case 'Verified':
+        return {
+          bg: '#ecfdf5',
+          text: '#059669',
+          border: '#a7f3d0',
           icon: ShieldCheck,
-          label: 'Verified',
-          desc: 'Maintenance staff confirmed this issue on-site. It is eligible for Green Tokens!',
+          label: 'Admin Verified (Tokens Awarded!)',
+          desc: 'Admin approved this complaint! 10 Green Tokens have been awarded to your account.',
         };
       case 'In Progress':
         return {
@@ -88,7 +100,16 @@ export default function StudentReportsView({ onOpenReportForm }) {
           border: '#fde68a',
           icon: AlertCircle,
           label: 'In Progress',
-          desc: 'Maintenance crew is actively working on repairs at this location.',
+          desc: 'Hostel crew is actively resolving this complaint on-site.',
+        };
+      case 'Work Completed':
+        return {
+          bg: '#e0f2fe',
+          text: '#0369a1',
+          border: '#bae6fd',
+          icon: CheckCircle,
+          label: 'Work Completed (Pending Admin Closure)',
+          desc: 'Staff completed resolution on-site and reported to Admin for final closure.',
         };
       case 'Resolved':
         return {
@@ -96,8 +117,8 @@ export default function StudentReportsView({ onOpenReportForm }) {
           text: '#059669',
           border: '#a7f3d0',
           icon: CheckCircle,
-          label: 'Resolved',
-          desc: 'Issue resolved! The work has been completed and verified closed.',
+          label: 'Resolved & Closed',
+          desc: 'Complaint confirmed resolved and closed by Admin.',
         };
       case 'Rejected':
         return {
@@ -106,7 +127,7 @@ export default function StudentReportsView({ onOpenReportForm }) {
           border: '#fecaca',
           icon: X,
           label: 'Rejected',
-          desc: 'This report could not be verified or was marked invalid.',
+          desc: 'This complaint could not be verified or was marked invalid.',
         };
       default:
         return {
@@ -185,11 +206,11 @@ export default function StudentReportsView({ onOpenReportForm }) {
                 letterSpacing: '-0.5px',
               }}
             >
-              My Submitted Reports
+              My Hostel Complaints
             </h2>
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 6, fontWeight: 500 }}>
-            Track the status of your reported campus maintenance and cleanliness issues
+            Track the status of your reported hostel complaints, cleanliness, and maintenance issues
           </p>
         </div>
 
@@ -201,7 +222,7 @@ export default function StudentReportsView({ onOpenReportForm }) {
               className="btn btn-primary"
               style={{ padding: '11px 22px', fontSize: 14 }}
             >
-              <Upload size={16} /> Report Maintenance Issue
+              <Upload size={16} /> Report Hostel Complaint
             </button>
           )}
         </div>
@@ -343,7 +364,7 @@ export default function StudentReportsView({ onOpenReportForm }) {
           <input
             id="student-search-input"
             type="text"
-            placeholder="Search by location, building, or description..."
+            placeholder="Search by hostel, block, floor, or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="form-input"
@@ -370,9 +391,11 @@ export default function StudentReportsView({ onOpenReportForm }) {
           >
             <option value="">All Statuses</option>
             <option value="Submitted">Submitted</option>
-            <option value="Reported">Reported</option>
-            <option value="Verified">Verified</option>
+            <option value="Verified by Food Staff">Verified by Food Staff</option>
+            <option value="Verified by Warden">Verified by Warden</option>
+            <option value="Admin Verified">Admin Verified</option>
             <option value="In Progress">In Progress</option>
+            <option value="Work Completed">Work Completed</option>
             <option value="Resolved">Resolved</option>
             <option value="Rejected">Rejected</option>
           </select>
@@ -391,18 +414,18 @@ export default function StudentReportsView({ onOpenReportForm }) {
       {loading ? (
         <div className="glass-card" style={{ padding: 60, textAlign: 'center', color: 'var(--text-muted)' }}>
           <RefreshCw size={24} className="spin" style={{ marginBottom: 12 }} />
-          <div>Loading your submitted reports...</div>
+          <div>Loading your hostel complaints...</div>
         </div>
       ) : filteredReports.length === 0 ? (
         <div className="glass-card" style={{ textAlign: 'center', padding: 60, color: 'var(--text-subtle)' }}>
           <FileText size={48} color="#cbd5e1" style={{ marginBottom: 14 }} />
           <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>
-            {reports.length === 0 ? 'No reports submitted yet' : 'No reports match the selected filter'}
+            {reports.length === 0 ? 'No complaints submitted yet' : 'No complaints match the selected filter'}
           </p>
           <p style={{ fontSize: 13, marginTop: 8, color: 'var(--text-muted)' }}>
             {reports.length === 0
-              ? 'Click "Report Maintenance Issue" above to submit your first report.'
-              : 'Try clearing the search or status filter to view all your reports.'}
+              ? 'Click "Report Hostel Complaint" above to submit your first complaint.'
+              : 'Try clearing the search or status filter to view all your complaints.'}
           </p>
         </div>
       ) : (
@@ -442,10 +465,23 @@ export default function StudentReportsView({ onOpenReportForm }) {
                     <StatusIcon size={22} color={cfg.text} />
                   </div>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                       <span style={{ color: 'var(--text-main)', fontSize: 16, fontWeight: 800 }}>
-                        Report #{r.id} &mdash; {r.location}
+                        Complaint #{r.id} &mdash; {r.hostel_type || r.location}
                       </span>
+                      {r.category && (
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: 6,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          background: (r.food_related || r.category === 'Food & Mess' || r.category === 'Food/Mess') ? '#fef3c7' : '#f1f5f9',
+                          color: (r.food_related || r.category === 'Food & Mess' || r.category === 'Food/Mess') ? '#92400e' : '#475569',
+                          border: (r.food_related || r.category === 'Food & Mess' || r.category === 'Food/Mess') ? '1px solid #fde68a' : '1px solid #e2e8f0',
+                        }}>
+                          {(r.food_related || r.category === 'Food & Mess' || r.category === 'Food/Mess') ? '🍽 ' : ''}{r.category}
+                        </span>
+                      )}
                     </div>
                     <div style={{ color: 'var(--text-subtle)', fontSize: 13, marginTop: 4, fontWeight: 500 }}>
                       {r.building && `${r.building}`}
@@ -531,7 +567,7 @@ export default function StudentReportsView({ onOpenReportForm }) {
                   id="detail-modal-title"
                   style={{ color: 'var(--text-main)', fontSize: 20, fontWeight: 800, margin: 0 }}
                 >
-                  Report #{selectedReport.id} Details
+                  Complaint #{selectedReport.id} Details
                 </h3>
                 {(() => {
                   const cfg = statusConfig(selectedReport.status);
@@ -659,10 +695,14 @@ export default function StudentReportsView({ onOpenReportForm }) {
               }}
             >
               {[
-                ['Location', selectedReport.location],
-                ['Building', selectedReport.building || '—'],
+                ['Hostel Type', selectedReport.hostel_type || selectedReport.location],
+                ['Category', selectedReport.category || 'General'],
+                ['Block / Wing', selectedReport.building || '—'],
                 ['Floor', selectedReport.floor || '—'],
-                ['Area', selectedReport.area || '—'],
+                ['Room / Area', selectedReport.area || '—'],
+                ['Food / Mess Issue', (selectedReport.food_related || selectedReport.category === 'Food & Mess' || selectedReport.category === 'Food/Mess') ? 'Yes' : 'No'],
+                ['Assigned Team', selectedReport.assigned_team || 'Not Assigned'],
+                ['Resolved At', selectedReport.resolved_at ? new Date(selectedReport.resolved_at).toLocaleString() : '—'],
               ].map(([label, val]) => (
                 <div
                   key={label}
@@ -725,7 +765,7 @@ export default function StudentReportsView({ onOpenReportForm }) {
             )}
 
             {/* Token reward notice */}
-            {(selectedReport.status === 'Verified' || selectedReport.status === 'Resolved') && (
+            {['Admin Verified', 'In Progress', 'Work Completed', 'Resolved', 'Verified'].includes(selectedReport.status) && (
               <div
                 style={{
                   display: 'flex',
@@ -740,7 +780,7 @@ export default function StudentReportsView({ onOpenReportForm }) {
               >
                 <Coins size={20} color="#059669" />
                 <div style={{ fontSize: 13, color: '#047857', fontWeight: 600 }}>
-                  Earned <strong>5 Green Tokens</strong> for this verified campus maintenance report!
+                  Earned <strong>10 Green Tokens</strong> for this Admin-verified hostel complaint!
                 </div>
               </div>
             )}
