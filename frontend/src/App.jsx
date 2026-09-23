@@ -28,7 +28,8 @@ import {
   TrendingUp,
   TrendingDown,
   ShieldCheck,
-  Check
+  Check,
+  Ticket
 } from 'lucide-react';
 import {
   BarChart,
@@ -51,6 +52,7 @@ import { authAPI, reportsAPI, tokensAPI, rewardsAPI, dashboardAPI } from './api'
 import MaintenanceReportForm from './MaintenanceReportForm';
 import StaffReportsQueue from './StaffReportsQueue';
 import StudentReportsView from './StudentReportsView';
+import RedemptionVerification from './RedemptionVerification';
 
 function LoginPage() {
   const { login, loading } = useAuth();
@@ -601,10 +603,12 @@ function TokensPage() {
 function Sidebar({ currentPage, onNavigate }) {
   const { user, logout } = useAuth();
   const isStudent = user?.role === 'student';
+  const isStaff = ['warden', 'maintenance', 'admin', 'food_staff'].includes(user?.role);
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'reports', label: 'Hostel Complaints', icon: FileText },
     ...(isStudent ? [{ id: 'tokens', label: 'Green Tokens', icon: Coins }] : []),
+    ...(isStaff ? [{ id: 'redemptions', label: 'Redemption Verification', icon: Ticket }] : []),
   ];
 
   return (
@@ -748,7 +752,7 @@ function Sidebar({ currentPage, onNavigate }) {
 
 function AppShell() {
   const [page, setPage] = useState('dashboard');
-  const pages = { dashboard: DashboardPage, reports: ReportsPage, tokens: TokensPage };
+  const pages = { dashboard: DashboardPage, reports: ReportsPage, tokens: TokensPage, redemptions: RedemptionVerification };
   const Page = pages[page] || DashboardPage;
 
   return (

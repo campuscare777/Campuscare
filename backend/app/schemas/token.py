@@ -41,5 +41,6 @@ class FulfillmentLookupResponse(BaseModel):
     resident_name: Optional[str] = None
     tokens_deducted: int
     fulfillment_status: str
+    fulfillment_team: Optional[str] = None   # team that handles this category
     created_at: datetime
     fulfilled_at: Optional[datetime] = None
