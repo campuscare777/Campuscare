@@ -39,6 +39,13 @@ class TokenAwardService:
         return self.token_repo.get_history(student_id)
 
 
+FULFILLMENT_TEAMS = {
+    "Canteen": "Canteen Team",
+    "Laundry": "Laundry Team",
+    "Hostel Stores": "Hostel Stores Team",
+}
+
+
 class RewardRedemptionService:
     def __init__(self, db: Session):
         self.db = db
@@ -89,6 +96,7 @@ class RewardRedemptionService:
 
     def fulfill_redemption(self, voucher_reference: str, staff_id: int) -> dict:
         """Staff calls this to mark a voucher as fulfilled after handing over the reward."""
+        voucher_reference = voucher_reference.strip().upper()
         tx = self.token_repo.get_by_redemption_reference(voucher_reference)
         if not tx:
             raise HTTPException(status_code=404, detail="Voucher reference not found")
@@ -106,12 +114,15 @@ class RewardRedemptionService:
     def lookup_redemption(self, voucher_reference: str) -> dict:
         """Staff calls this to look up a voucher before fulfilling it."""
         from app.repositories.reward_repository import RewardCatalogRepository
+        voucher_reference = voucher_reference.strip().upper()
         tx = self.token_repo.get_by_redemption_reference(voucher_reference)
         if not tx:
             raise HTTPException(status_code=404, detail="Voucher reference not found")
 
         reward_repo = RewardCatalogRepository(self.db)
         reward = reward_repo.get_by_id(tx.related_reward_id)
+        from app.models.user import User
+        resident = self.db.query(User).filter(User.id == tx.student_id).first()
 
         return {
             "transaction_id": tx.id,
@@ -119,7 +130,9 @@ class RewardRedemptionService:
             "reward_name": reward.name if reward else "Unknown",
             "reward_category": reward.category if reward else "Unknown",
             "tokens_deducted": tx.amount,
+            "resident_name": resident.full_name if resident else None,
             "fulfillment_status": tx.fulfillment_status or "Pending",
+            "fulfillment_team": FULFILLMENT_TEAMS.get(reward.category) if reward else None,
             "created_at": tx.created_at,
             "fulfilled_at": tx.fulfilled_at,
         }
