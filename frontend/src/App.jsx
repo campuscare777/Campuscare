@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import annaUnivLogo from './assets/anna_university_logo.png';
+import AdminRewardManagement from './AdminRewardManagement';
 import {
   LayoutDashboard,
   FileText,
@@ -604,11 +605,13 @@ function Sidebar({ currentPage, onNavigate }) {
   const { user, logout } = useAuth();
   const isStudent = user?.role === 'student';
   const isStaff = ['warden', 'maintenance', 'admin', 'food_staff'].includes(user?.role);
+  const isRewardAdmin = ['admin', 'warden'].includes(user?.role);
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'reports', label: 'Hostel Complaints', icon: FileText },
     ...(isStudent ? [{ id: 'tokens', label: 'Green Tokens', icon: Coins }] : []),
     ...(isStaff ? [{ id: 'redemptions', label: 'Redemption Verification', icon: Ticket }] : []),
+    ...(isRewardAdmin ? [{ id: 'reward-management', label: 'Reward Catalog', icon: Gift }] : []),
   ];
 
   return (
@@ -751,8 +754,19 @@ function Sidebar({ currentPage, onNavigate }) {
 }
 
 function AppShell() {
+  const { user } = useAuth();
   const [page, setPage] = useState('dashboard');
-  const pages = { dashboard: DashboardPage, reports: ReportsPage, tokens: TokensPage, redemptions: RedemptionVerification };
+
+  // Wrap AdminRewardManagement so it receives the userRole prop
+  const RewardManagementPage = () => <AdminRewardManagement userRole={user?.role} />;
+
+  const pages = {
+    dashboard: DashboardPage,
+    reports: ReportsPage,
+    tokens: TokensPage,
+    redemptions: RedemptionVerification,
+    'reward-management': RewardManagementPage,
+  };
   const Page = pages[page] || DashboardPage;
 
   return (
