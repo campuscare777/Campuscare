@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 from app.db.session import engine, Base, init_db
-from app.api import auth, reports, tokens, dashboard
+from app.api import auth, reports, tokens, dashboard, lost_and_found
 
 init_db()
 
@@ -26,6 +26,7 @@ app.include_router(auth.router)
 app.include_router(reports.router)
 app.include_router(tokens.router)
 app.include_router(dashboard.router)
+app.include_router(lost_and_found.router)
 
 
 @app.get("/health")

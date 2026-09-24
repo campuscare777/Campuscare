@@ -18,6 +18,7 @@ class Base(DeclarativeBase):
 
 def init_db():
     from sqlalchemy import inspect, text
+    import app.models  # Ensure models are loaded into Base metadata
     Base.metadata.create_all(bind=engine)
     with engine.connect() as conn:
         inspector = inspect(engine)
