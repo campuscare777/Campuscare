@@ -230,7 +230,66 @@ def seed():
         db.add_all(rewards)
         db.commit()
 
-        print(f"Seeded {len(users)} users, {len(reports)} hostel complaints, {len(rewards)} rewards")
+        # ------------------------------------------------------------------
+        # Lost & Found Item Reports (HOSTELCARE-F004-DB-001)
+        # ------------------------------------------------------------------
+        from app.models.lost_and_found import LostAndFoundItemReport, LostAndFoundStatusHistory
+
+        lnf_items = [
+            LostAndFoundItemReport(
+                reporter_id=residents[0].id,
+                report_type="Lost",
+                item_category="Electronics",
+                item_name="Blue Wireless Earbuds",
+                description="Left near Reading Room desk in Block A.",
+                image_reference="uploads/lost_earbuds.jpg",
+                hostel_type="Boys Hostel",
+                location="Block A, Reading Room Desk 4",
+                date_lost_or_found=datetime.utcnow() - timedelta(days=2),
+                identifying_details="Black case with brand 'boAt' logo",
+                status="Submitted",
+                assigned_staff="Security Desk",
+                created_at=datetime.utcnow() - timedelta(days=2),
+                updated_at=datetime.utcnow() - timedelta(days=2),
+            ),
+            LostAndFoundItemReport(
+                reporter_id=residents[1].id,
+                report_type="Found",
+                item_category="Keys",
+                item_name="Bunch of 3 Brass Keys",
+                description="Found near Mess Entrance after breakfast.",
+                image_reference="uploads/found_keys.jpg",
+                hostel_type="Girls Hostel",
+                location="Girls Hostel Mess Counter",
+                date_lost_or_found=datetime.utcnow() - timedelta(days=1),
+                identifying_details="Blue keychain with label 'Room 204'",
+                status="Under Review",
+                assigned_staff="Warden Office",
+                created_at=datetime.utcnow() - timedelta(days=1),
+                updated_at=datetime.utcnow() - timedelta(days=1),
+            ),
+            LostAndFoundItemReport(
+                reporter_id=residents[2].id,
+                report_type="Found",
+                item_category="Documents",
+                item_name="Student ID Card",
+                description="Found in Common Library area.",
+                image_reference="uploads/id_card.jpg",
+                hostel_type="Boys Hostel",
+                location="Main Library Desk",
+                date_lost_or_found=datetime.utcnow() - timedelta(days=5),
+                identifying_details="ID No: 2024-HC-881",
+                status="Returned",
+                assigned_staff="Library Staff",
+                closed_at=datetime.utcnow() - timedelta(days=3),
+                created_at=datetime.utcnow() - timedelta(days=5),
+                updated_at=datetime.utcnow() - timedelta(days=3),
+            ),
+        ]
+        db.add_all(lnf_items)
+        db.commit()
+
+        print(f"Seeded {len(users)} users, {len(reports)} hostel complaints, {len(rewards)} rewards, {len(lnf_items)} lost & found reports")
         print("\nLogin credentials:")
         print("  admin        / admin123    (Admin)")
         print("  warden1      / warden123   (Warden)")
