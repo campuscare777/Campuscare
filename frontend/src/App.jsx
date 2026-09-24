@@ -51,6 +51,7 @@ import {
 } from 'recharts';
 import { authAPI, reportsAPI, tokensAPI, rewardsAPI, dashboardAPI } from './api';
 import MaintenanceReportForm from './MaintenanceReportForm';
+import MissingItemReportForm from './MissingItemReportForm';
 import StaffReportsQueue from './StaffReportsQueue';
 import StudentReportsView from './StudentReportsView';
 import RedemptionVerification from './RedemptionVerification';
@@ -398,6 +399,7 @@ function DashboardPage() {
 function ReportsPage() {
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
+  const [showMissingForm, setShowMissingForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const isMaintenance = ['warden', 'food_staff', 'maintenance', 'admin'].includes(user?.role);
@@ -406,8 +408,33 @@ function ReportsPage() {
     return <StaffReportsQueue onReportUpdated={() => setRefreshKey((k) => k + 1)} />;
   }
 
+  if (showMissingForm) {
+    return (
+      <MissingItemReportForm
+        onCancel={() => setShowMissingForm(false)}
+        onSuccess={() => {}}
+      />
+    );
+  }
+
   return (
     <div>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: 12,
+          marginBottom: 20,
+        }}
+      >
+        <button
+          onClick={() => setShowMissingForm(true)}
+          className="btn btn-primary"
+        >
+          Report Missing Item
+        </button>
+      </div>
+
       {showForm ? (
         <MaintenanceReportForm
           onCancel={() => setShowForm(false)}
@@ -422,6 +449,158 @@ function ReportsPage() {
           onOpenReportForm={() => setShowForm(true)}
         />
       )}
+    </div>
+  );
+}
+
+function Sidebar({ currentPage, onNavigate }) {
+  const { user, logout } = useAuth();
+  const isStudent = user?.role === 'student';
+  const isStaff = ['warden', 'maintenance', 'admin', 'food_staff'].includes(user?.role);
+  const isRewardAdmin = ['admin', 'warden'].includes(user?.role);
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'reports', label: 'Hostel Complaints', icon: FileText },
+    ...(isStudent ? [{ id: 'tokens', label: 'Green Tokens', icon: Coins }] : []),
+    ...(isStaff ? [{ id: 'redemptions', label: 'Redemption Verification', icon: Ticket }] : []),
+    ...(isRewardAdmin ? [{ id: 'reward-management', label: 'Reward Catalog', icon: Gift }] : []),
+  ];
+
+  return (
+    <div style={{
+      width: 260,
+      background: '#ffffff',
+      borderRight: '1px solid #e2e8f0',
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '100vh',
+      position: 'fixed',
+      boxShadow: '2px 0 12px rgba(15, 23, 42, 0.03)',
+      zIndex: 10
+    }}>
+      {/* Brand Header */}
+      <div style={{ padding: '28px 24px', borderBottom: '1px solid #f1f5f9' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            border: '1px solid #e2e8f0',
+            padding: 4
+          }}>
+            <img
+              src={annaUnivLogo}
+              alt="Anna University"
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            />
+          </div>
+          <div>
+            <div style={{ color: 'var(--text-main)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.3px' }}>
+              HostelCare
+            </div>
+            <div style={{ color: 'var(--text-subtle)', fontSize: 11, fontWeight: 600 }}>
+              Resident & Staff Portal
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Links */}
+      <nav style={{ padding: '20px 14px', flex: 1 }}>
+        <div style={{ color: 'var(--text-subtle)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.2px', padding: '0 12px', marginBottom: 12 }}>
+          Main Menu
+        </div>
+        {menuItems.map((item) => {
+          const active = currentPage === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                width: '100%',
+                padding: '12px 16px',
+                marginBottom: 6,
+                background: active ? '#ecfdf5' : 'transparent',
+                border: active ? '1px solid #a7f3d0' : '1px solid transparent',
+                borderRadius: 12,
+                cursor: 'pointer',
+                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                color: active ? '#059669' : 'var(--text-muted)',
+                fontSize: 14,
+                fontWeight: active ? 700 : 500,
+                textAlign: 'left',
+                fontFamily: 'inherit'
+              }}
+              onMouseEnter={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = '#f8fafc';
+                  e.currentTarget.style.color = 'var(--text-main)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!active) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = 'var(--text-muted)';
+                }
+              }}
+            >
+              <item.icon size={19} color={active ? '#059669' : '#64748b'} />
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* User Footer Card */}
+      <div style={{ padding: '20px 14px', borderTop: '1px solid #f1f5f9' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '12px 14px',
+          background: '#f8fafc',
+          borderRadius: 14,
+          border: '1px solid #e2e8f0',
+          marginBottom: 12
+        }}>
+          <div style={{
+            width: 38,
+            height: 38,
+            borderRadius: 12,
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+            flexShrink: 0
+          }}>
+            <Users size={16} color="#059669" />
+          </div>
+          <div style={{ overflow: 'hidden' }}>
+            <div style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {user?.full_name}
+            </div>
+            <div style={{ color: 'var(--text-subtle)', fontSize: 11, textTransform: 'capitalize', fontWeight: 600 }}>
+              {user?.role} User
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={logout}
+          className="btn btn-danger"
+          style={{ width: '100%', padding: '10px 0', fontSize: 13, borderRadius: 10, gap: 8 }}
+        >
+          <LogOut size={16} /> Sign Out
+        </button>
+      </div>
     </div>
   );
 }
@@ -579,7 +758,7 @@ function TokensPage() {
                   <h4 style={{ color: 'var(--text-main)', fontSize: 17, fontWeight: 800, margin: '0 0 6px' }}>{r.name}</h4>
                   {r.provider_location && (
                     <div style={{ color: '#059669', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>
-                      π“ {r.provider_location}
+                      =ƒτμ {r.provider_location}
                     </div>
                   )}
                   <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 20px', lineHeight: 1.6 }}>{r.description}</p>
@@ -601,157 +780,6 @@ function TokensPage() {
   );
 }
 
-function Sidebar({ currentPage, onNavigate }) {
-  const { user, logout } = useAuth();
-  const isStudent = user?.role === 'student';
-  const isStaff = ['warden', 'maintenance', 'admin', 'food_staff'].includes(user?.role);
-  const isRewardAdmin = ['admin', 'warden'].includes(user?.role);
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'reports', label: 'Hostel Complaints', icon: FileText },
-    ...(isStudent ? [{ id: 'tokens', label: 'Green Tokens', icon: Coins }] : []),
-    ...(isStaff ? [{ id: 'redemptions', label: 'Redemption Verification', icon: Ticket }] : []),
-    ...(isRewardAdmin ? [{ id: 'reward-management', label: 'Reward Catalog', icon: Gift }] : []),
-  ];
-
-  return (
-    <div style={{
-      width: 260,
-      background: '#ffffff',
-      borderRight: '1px solid #e2e8f0',
-      display: 'flex',
-      flexDirection: 'column',
-      minHeight: '100vh',
-      position: 'fixed',
-      boxShadow: '2px 0 12px rgba(15, 23, 42, 0.03)',
-      zIndex: 10
-    }}>
-      {/* Brand Header */}
-      <div style={{ padding: '28px 24px', borderBottom: '1px solid #f1f5f9' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
-            background: '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            justify: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-            border: '1px solid #e2e8f0',
-            padding: 4
-          }}>
-            <img
-              src={annaUnivLogo}
-              alt="Anna University"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-            />
-          </div>
-          <div>
-            <div style={{ color: 'var(--text-main)', fontSize: 16, fontWeight: 800, letterSpacing: '-0.3px' }}>
-              HostelCare
-            </div>
-            <div style={{ color: 'var(--text-subtle)', fontSize: 11, fontWeight: 600 }}>
-              Resident & Staff Portal
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation Links */}
-      <nav style={{ padding: '20px 14px', flex: 1 }}>
-        <div style={{ color: 'var(--text-subtle)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.2px', padding: '0 12px', marginBottom: 12 }}>
-          Main Menu
-        </div>
-        {menuItems.map((item) => {
-          const active = currentPage === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                width: '100%',
-                padding: '12px 16px',
-                marginBottom: 6,
-                background: active ? '#ecfdf5' : 'transparent',
-                border: active ? '1px solid #a7f3d0' : '1px solid transparent',
-                borderRadius: 12,
-                cursor: 'pointer',
-                transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                color: active ? '#059669' : 'var(--text-muted)',
-                fontSize: 14,
-                fontWeight: active ? 700 : 500,
-                textAlign: 'left',
-                fontFamily: 'inherit'
-              }}
-              onMouseEnter={(e) => {
-                if (!active) {
-                  e.currentTarget.style.background = '#f8fafc';
-                  e.currentTarget.style.color = 'var(--text-main)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!active) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-muted)';
-                }
-              }}
-            >
-              <item.icon size={19} color={active ? '#059669' : '#64748b'} />
-              {item.label}
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* User Footer Card */}
-      <div style={{ padding: '20px 14px', borderTop: '1px solid #f1f5f9' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '12px 14px',
-          background: '#f8fafc',
-          borderRadius: 14,
-          border: '1px solid #e2e8f0',
-          marginBottom: 12
-        }}>
-          <div style={{
-            width: 38,
-            height: 38,
-            borderRadius: 12,
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            justify: 'center',
-            flexShrink: 0
-          }}>
-            <Users size={16} color="#059669" />
-          </div>
-          <div style={{ overflow: 'hidden' }}>
-            <div style={{ color: 'var(--text-main)', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {user?.full_name}
-            </div>
-            <div style={{ color: 'var(--text-subtle)', fontSize: 11, textTransform: 'capitalize', fontWeight: 600 }}>
-              {user?.role} User
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={logout}
-          className="btn btn-danger"
-          style={{ width: '100%', padding: '10px 0', fontSize: 13, borderRadius: 10, gap: 8 }}
-        >
-          <LogOut size={16} /> Sign Out
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function AppShell() {
   const { user } = useAuth();
