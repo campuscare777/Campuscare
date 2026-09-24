@@ -20,6 +20,8 @@ ALLOWED_STATUSES = {
     "Rejected",
 }
 
+STAFF_ROLES = ["admin", "warden", "staff", "hostel_staff"]
+
 
 class LostAndFoundService:
     def __init__(self, db: Session):
@@ -27,6 +29,7 @@ class LostAndFoundService:
         self.repo = LostAndFoundRepository(db)
 
     def create_report(self, reporter_id: int, payload: LostAndFoundCreate) -> LostAndFoundItemReport:
+        """AC1: Create a new lost/found report with unique reference ID."""
         report = LostAndFoundItemReport(
             reporter_id=reporter_id,
             report_type=payload.report_type,
@@ -43,6 +46,7 @@ class LostAndFoundService:
         return self.repo.create(report)
 
     def get_report(self, item_report_id: int) -> LostAndFoundItemReport:
+        """AC1: Retrieve report by reference ID (item_report_id)."""
         report = self.repo.get_by_id(item_report_id)
         if not report:
             raise HTTPException(status_code=404, detail="Lost & Found item report not found")
@@ -60,7 +64,13 @@ class LostAndFoundService:
         status: Optional[str] = None,
         reporter_id: Optional[int] = None,
         hostel_type: Optional[str] = None,
+        hide_closed: bool = False,
     ) -> List[LostAndFoundItemReport]:
+        """
+        List reports with filtering.
+        
+        AC5: hide_closed=True excludes Closed and Returned items from the list.
+        """
         reports = self.repo.get_all(
             report_type=report_type,
             item_category=item_category,
@@ -68,10 +78,17 @@ class LostAndFoundService:
             reporter_id=reporter_id,
             hostel_type=hostel_type,
         )
+        
+        # AC5: Filter out closed items if requested
+        if hide_closed:
+            reports = [r for r in reports if r.status not in ["Closed", "Returned"]]
+        
+        # Attach reporter names
         for r in reports:
             user = self.db.query(User).filter(User.id == r.reporter_id).first()
             if user:
                 setattr(r, "reporter_name", user.full_name or user.username)
+        
         return reports
 
     def update_status(
@@ -80,6 +97,10 @@ class LostAndFoundService:
         changed_by_id: int,
         payload: LostAndFoundStatusUpdate,
     ) -> LostAndFoundItemReport:
+        """
+        AC2: Update status with staff authorization.
+        AC3: Save closure timestamp when item is returned/closed.
+        """
         report = self.get_report(item_report_id)
 
         new_status = payload.status
@@ -123,6 +144,7 @@ class LostAndFoundService:
         item_report_id: int,
         payload: LostAndFoundUpdate,
     ) -> LostAndFoundItemReport:
+        """AC1: Update report details (reporter can edit their own)."""
         report = self.get_report(item_report_id)
 
         for field, value in payload.model_dump(exclude_unset=True).items():
@@ -139,5 +161,6 @@ class LostAndFoundService:
         return self.repo.update(report)
 
     def get_status_history(self, item_report_id: int) -> List[LostAndFoundStatusHistory]:
+        """Get audit trail of status changes."""
         self.get_report(item_report_id)
         return self.repo.get_status_history(item_report_id)
