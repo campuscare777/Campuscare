@@ -71,6 +71,16 @@ export const rewardsAPI = {
   lookupRedemption: (voucherRef) => api.get(`/redemptions/${voucherRef}`),
   /** Staff: mark a voucher as fulfilled */
   fulfillRedemption: (voucherRef) => api.patch(`/redemptions/${voucherRef}/fulfill`),
+
+  // Admin / Warden reward management (HOSTELCARE-F003-UI-004)
+  /** Admin: list ALL rewards including inactive */
+  adminList: () => api.get('/admin/rewards'),
+  /** Admin: create a new reward */
+  adminCreate: (data) => api.post('/admin/rewards', data),
+  /** Admin: update a reward's details, token cost, or availability */
+  adminUpdate: (id, data) => api.put(`/admin/rewards/${id}`, data),
+  /** Admin: soft-delete (deactivate) a reward */
+  adminDelete: (id) => api.delete(`/admin/rewards/${id}`),
 };
 
 export const dashboardAPI = {
