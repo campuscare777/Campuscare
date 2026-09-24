@@ -86,5 +86,10 @@ export const rewardsAPI = {
 export const dashboardAPI = {
   get: () => api.get('/dashboard'),
 };
-
+export const lostAndFoundAPI = {
+  create: (formData) =>
+    api.post('/lost-and-found', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+};
 export default api;
