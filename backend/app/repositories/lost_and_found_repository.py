@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
-from app.models.lost_and_found import LostAndFoundItemReport, LostAndFoundStatusHistory
+from app.models.lost_and_found import LostAndFoundItemReport, LostAndFoundStatusHistory, LostAndFoundClaim
 from datetime import datetime
 from typing import Optional, List
 
@@ -76,3 +76,36 @@ class LostAndFoundRepository:
             .all()
         )
         return {status: count for status, count in results}
+
+    def create_claim(self, claim: LostAndFoundClaim) -> LostAndFoundClaim:
+        self.db.add(claim)
+        self.db.commit()
+        self.db.refresh(claim)
+        return claim
+
+    def get_claim(self, claim_id: int) -> Optional[LostAndFoundClaim]:
+        return self.db.query(LostAndFoundClaim).filter(
+            LostAndFoundClaim.claim_id == claim_id
+        ).first()
+
+    def update_claim(self, claim: LostAndFoundClaim) -> LostAndFoundClaim:
+        claim.updated_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(claim)
+        return claim
+
+    def get_claims(
+        self,
+        item_report_id: Optional[int] = None,
+        claimant_id: Optional[int] = None,
+        status: Optional[str] = None,
+    ) -> List[LostAndFoundClaim]:
+        query = self.db.query(LostAndFoundClaim)
+        if item_report_id is not None:
+            query = query.filter(LostAndFoundClaim.item_report_id == item_report_id)
+        if claimant_id is not None:
+            query = query.filter(LostAndFoundClaim.claimant_id == claimant_id)
+        if status and status != "All":
+            query = query.filter(LostAndFoundClaim.status == status)
+        return query.order_by(LostAndFoundClaim.created_at.desc()).all()
+

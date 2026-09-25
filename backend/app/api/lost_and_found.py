@@ -12,6 +12,9 @@ from app.schemas.lost_and_found import (
     LostAndFoundUpdate,
     LostAndFoundStatusUpdate,
     LostAndFoundClaimRequest,
+    LostAndFoundClaimReview,
+    LostAndFoundClaimHandover,
+    LostAndFoundClaimResponse,
     LostAndFoundResponse,
     LostAndFoundListResponse,
     LostAndFoundStatusHistoryResponse,
@@ -162,9 +165,10 @@ def claim_lost_and_found_report(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Submit a claim request on a lost/found item report (AC5).
+    Submit a claim request on a lost/found item report (AC1, AC2).
     
-    Transitions item status to 'Claim Requested' for authorized staff verification.
+    Creates a claim request record and transitions item status to 'Claim Requested'
+    for authorized staff verification.
     """
     service = LostAndFoundService(db)
     report = service.claim_report(
@@ -172,8 +176,128 @@ def claim_lost_and_found_report(
         claimant_id=current_user.id,
         claim_notes=payload.claim_notes if payload else None,
         proof_details=payload.proof_details if payload else None,
+        identifying_info=payload.identifying_info if payload else None,
+        contact_number=payload.contact_number if payload else None,
     )
     return LostAndFoundResponse.model_validate(report)
+
+
+@router.get("/claims", response_model=List[LostAndFoundClaimResponse])
+def list_claims(
+    item_report_id: Optional[int] = Query(None),
+    status: Optional[str] = Query(None),
+    my_claims: bool = Query(False, description="Filter to current resident's claims only"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    List item claims.
+    - Authorized staff can view all submitted claims or filter by item and status.
+    - Residents view their own claims with status and rejection reasons (AC4).
+    """
+    service = LostAndFoundService(db)
+    claimant_id = None
+    if my_claims or current_user.role not in STAFF_ROLES:
+        claimant_id = current_user.id
+
+    claims = service.list_claims(
+        item_report_id=item_report_id,
+        claimant_id=claimant_id,
+        status=status,
+    )
+    return [LostAndFoundClaimResponse.model_validate(c) for c in claims]
+
+
+@router.get("/claims/{claim_id}", response_model=LostAndFoundClaimResponse)
+def get_claim(
+    claim_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Retrieve details of a specific claim."""
+    service = LostAndFoundService(db)
+    claim = service.get_claim(claim_id)
+    if current_user.role not in STAFF_ROLES and claim.claimant_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only view your own claims")
+    return LostAndFoundClaimResponse.model_validate(claim)
+
+
+@router.post("/claims/{claim_id}/verify", response_model=LostAndFoundClaimResponse)
+def verify_claim(
+    claim_id: int,
+    payload: Optional[LostAndFoundClaimReview] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    AC3: Authorized staff approves claim.
+    Changes claim status to 'Verified' and item report status to 'Verified'.
+    """
+    service = LostAndFoundService(db)
+    claim = service.review_claim(
+        claim_id=claim_id,
+        staff_user=current_user,
+        action="approve",
+        notes=payload.notes if payload else None,
+    )
+    return LostAndFoundClaimResponse.model_validate(claim)
+
+
+@router.post("/claims/{claim_id}/reject", response_model=LostAndFoundClaimResponse)
+def reject_claim(
+    claim_id: int,
+    payload: LostAndFoundClaimReview,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    AC4: Authorized staff rejects claim with reason.
+    Stores the rejection reason and displays it to claimant.
+    """
+    service = LostAndFoundService(db)
+    claim = service.review_claim(
+        claim_id=claim_id,
+        staff_user=current_user,
+        action="reject",
+        rejection_reason=payload.rejection_reason,
+        notes=payload.notes,
+    )
+    return LostAndFoundClaimResponse.model_validate(claim)
+
+
+@router.post("/claims/{claim_id}/handover", response_model=LostAndFoundClaimResponse)
+def confirm_item_handover(
+    claim_id: int,
+    payload: Optional[LostAndFoundClaimHandover] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    AC5: Staff confirms item handover to claimant.
+    Changes item report status to 'Returned' and closure timestamp is saved.
+    """
+    service = LostAndFoundService(db)
+    claim = service.confirm_handover(
+        claim_id=claim_id,
+        staff_user=current_user,
+        handover_notes=payload.handover_notes if payload else None,
+    )
+    return LostAndFoundClaimResponse.model_validate(claim)
+
+
+@router.get("/{item_report_id}/claims", response_model=List[LostAndFoundClaimResponse])
+def get_claims_for_item_report(
+    item_report_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Retrieve claims associated with a specific item report."""
+    service = LostAndFoundService(db)
+    claimant_id = None
+    if current_user.role not in STAFF_ROLES:
+        claimant_id = current_user.id
+    claims = service.list_claims(item_report_id=item_report_id, claimant_id=claimant_id)
+    return [LostAndFoundClaimResponse.model_validate(c) for c in claims]
 
 
 @router.get("/{item_report_id}", response_model=LostAndFoundResponse)
