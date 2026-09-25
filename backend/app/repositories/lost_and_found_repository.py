@@ -22,6 +22,8 @@ class LostAndFoundRepository:
         reporter_id: Optional[int] = None,
         hostel_type: Optional[str] = None,
         search: Optional[str] = None,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
     ) -> List[LostAndFoundItemReport]:
         query = self.db.query(LostAndFoundItemReport)
         if report_type and report_type != "All":
@@ -44,6 +46,10 @@ class LostAndFoundRepository:
                     LostAndFoundItemReport.identifying_details.ilike(term),
                 )
             )
+        if date_from:
+            query = query.filter(LostAndFoundItemReport.created_at >= date_from)
+        if date_to:
+            query = query.filter(LostAndFoundItemReport.created_at <= date_to)
         return query.order_by(LostAndFoundItemReport.created_at.desc()).all()
 
     def create(self, report: LostAndFoundItemReport) -> LostAndFoundItemReport:

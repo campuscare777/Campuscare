@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.models.report import Report, ReportStatusHistory
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List
 
 
 class ReportRepository:
@@ -14,12 +14,17 @@ class ReportRepository:
 
     def get_all(
         self,
-        status: str = None,
-        reporter_id: int = None,
-        hostel_type: str = None,
-        category: str = None,
+        status: Optional[str] = None,
+        reporter_id: Optional[int] = None,
+        hostel_type: Optional[str] = None,
+        category: Optional[str] = None,
         food_related: Optional[bool] = None,
-    ) -> list[Report]:
+        block: Optional[str] = None,
+        floor: Optional[str] = None,
+        assigned_team: Optional[str] = None,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
+    ) -> List[Report]:
         query = self.db.query(Report)
         if status:
             query = query.filter(Report.status == status)
@@ -31,6 +36,16 @@ class ReportRepository:
             query = query.filter(Report.category == category)
         if food_related is not None:
             query = query.filter(Report.food_related == food_related)
+        if block:
+            query = query.filter(Report.building == block)
+        if floor:
+            query = query.filter(Report.floor == floor)
+        if assigned_team:
+            query = query.filter(Report.assigned_team == assigned_team)
+        if date_from:
+            query = query.filter(Report.created_at >= date_from)
+        if date_to:
+            query = query.filter(Report.created_at <= date_to)
         return query.order_by(Report.created_at.desc()).all()
 
     def get_food_complaints(self) -> list[Report]:

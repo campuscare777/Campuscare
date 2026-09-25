@@ -99,6 +99,11 @@ class ReportService:
         hostel_type: str = None,
         category: str = None,
         food_related: bool = None,
+        block: str = None,
+        floor: str = None,
+        assigned_team: str = None,
+        date_from=None,
+        date_to=None,
     ) -> list[Report]:
         return self.report_repo.get_all(
             status=status_filter,
@@ -106,6 +111,11 @@ class ReportService:
             hostel_type=hostel_type,
             category=category,
             food_related=food_related,
+            block=block,
+            floor=floor,
+            assigned_team=assigned_team,
+            date_from=date_from,
+            date_to=date_to,
         )
 
     def verify_report(self, report_id: int, staff_id: int, reason: str = None) -> Report:

@@ -57,6 +57,18 @@ const HOSTEL_TYPES = [
   'Common Areas',
 ];
 
+const ITEM_STATUSES = [
+  'All',
+  'Submitted',
+  'Under Review',
+  'Published',
+  'Claim Requested',
+  'Verified',
+  'Returned',
+  'Closed',
+  'Rejected',
+];
+
 export default function LostAndFoundListing({ onReportMissing, onReportFound }) {
   const { user } = useAuth();
 
@@ -69,6 +81,9 @@ export default function LostAndFoundListing({ onReportMissing, onReportFound }) 
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedHostelType, setSelectedHostelType] = useState('All');
   const [selectedReportType, setSelectedReportType] = useState('All'); // 'All' | 'Lost' | 'Found'
+  const [selectedStatus, setSelectedStatus] = useState('All');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [hideClosed, setHideClosed] = useState(true); // AC4: Hide closed by default for active listings
   const [onlyMyReports, setOnlyMyReports] = useState(false);
 
@@ -119,6 +134,9 @@ export default function LostAndFoundListing({ onReportMissing, onReportFound }) 
       if (selectedReportType !== 'All') params.report_type = selectedReportType;
       if (selectedCategory !== 'All') params.item_category = selectedCategory;
       if (selectedHostelType !== 'All') params.hostel_type = selectedHostelType;
+      if (selectedStatus !== 'All') params.status = selectedStatus;
+      if (dateFrom) params.date_from = dateFrom;
+      if (dateTo) params.date_to = dateTo + 'T23:59:59';
       if (hideClosed) params.hide_closed = true;
       if (onlyMyReports) params.my_reports = true;
       if (searchQuery.trim()) params.search = searchQuery.trim();
@@ -150,7 +168,7 @@ export default function LostAndFoundListing({ onReportMissing, onReportFound }) 
 
   useEffect(() => {
     fetchReports();
-  }, [selectedCategory, selectedHostelType, selectedReportType, hideClosed, onlyMyReports]);
+  }, [selectedCategory, selectedHostelType, selectedReportType, selectedStatus, dateFrom, dateTo, hideClosed, onlyMyReports]);
 
   useEffect(() => {
     if (activeTab === 'claims') {
@@ -685,7 +703,7 @@ export default function LostAndFoundListing({ onReportMissing, onReportFound }) 
                   borderRadius: 10,
                   fontSize: 13,
                   width: 'auto',
-                  minWidth: 150,
+                  minWidth: 140,
                 }}
                 value={selectedHostelType}
                 onChange={(e) => setSelectedHostelType(e.target.value)}
@@ -696,6 +714,81 @@ export default function LostAndFoundListing({ onReportMissing, onReportFound }) 
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Status Dropdown Filter */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <label
+                htmlFor="item-status-select"
+                style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-subtle)' }}
+              >
+                Status:
+              </label>
+              <select
+                id="item-status-select"
+                className="form-input"
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  width: 'auto',
+                  minWidth: 140,
+                }}
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
+                {ITEM_STATUSES.map((st) => (
+                  <option key={st} value={st}>
+                    {st === 'All' ? 'All Statuses' : st}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date Range Filters */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <label
+                htmlFor="item-date-from"
+                style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-subtle)' }}
+              >
+                From:
+              </label>
+              <input
+                id="item-date-from"
+                type="date"
+                className="form-input"
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  width: 'auto',
+                }}
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                max={dateTo || undefined}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <label
+                htmlFor="item-date-to"
+                style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-subtle)' }}
+              >
+                To:
+              </label>
+              <input
+                id="item-date-to"
+                type="date"
+                className="form-input"
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: 10,
+                  fontSize: 13,
+                  width: 'auto',
+                }}
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                min={dateFrom || undefined}
+              />
             </div>
           </div>
 
@@ -832,6 +925,9 @@ export default function LostAndFoundListing({ onReportMissing, onReportFound }) 
                 setSelectedCategory('All');
                 setSelectedHostelType('All');
                 setSelectedReportType('All');
+                setSelectedStatus('All');
+                setDateFrom('');
+                setDateTo('');
                 setSearchQuery('');
                 setOnlyMyReports(false);
                 setHideClosed(false);

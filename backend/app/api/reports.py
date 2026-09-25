@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, s
 from sqlalchemy.orm import Session
 from typing import Optional
 import os
+from datetime import datetime
 from app.db.session import get_db
 from app.services.auth_service import get_current_user
 from app.services.report_service import ReportService, STAFF_ROLES
@@ -79,6 +80,11 @@ def list_reports(
     hostel_type: Optional[str] = Query(None),
     category: Optional[str] = Query(None),
     food_related: Optional[bool] = Query(None),
+    block: Optional[str] = Query(None, description="Filter by block/building (e.g. Block A)"),
+    floor: Optional[str] = Query(None, description="Filter by floor (e.g. 1st Floor)"),
+    assigned_team: Optional[str] = Query(None, description="Filter by assigned team"),
+    date_from: Optional[datetime] = Query(None, description="Filter reports submitted on or after this date (ISO format)"),
+    date_to: Optional[datetime] = Query(None, description="Filter reports submitted on or before this date (ISO format)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -93,6 +99,11 @@ def list_reports(
             hostel_type=hostel_type,
             category=category,
             food_related=True,
+            block=block,
+            floor=floor,
+            assigned_team=assigned_team,
+            date_from=date_from,
+            date_to=date_to,
         )
     elif current_user.role == "warden":
         # Warden sees ONLY non-food complaints
@@ -101,6 +112,11 @@ def list_reports(
             hostel_type=hostel_type,
             category=category,
             food_related=False,
+            block=block,
+            floor=floor,
+            assigned_team=assigned_team,
+            date_from=date_from,
+            date_to=date_to,
         )
     else:
         # Admin & maintenance see all complaints
@@ -109,6 +125,11 @@ def list_reports(
             hostel_type=hostel_type,
             category=category,
             food_related=food_related,
+            block=block,
+            floor=floor,
+            assigned_team=assigned_team,
+            date_from=date_from,
+            date_to=date_to,
         )
     return ReportListResponse(
         reports=[ReportResponse.model_validate(r) for r in reports],

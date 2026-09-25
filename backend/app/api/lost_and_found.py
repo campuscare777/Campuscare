@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile
 from sqlalchemy.orm import Session
 from typing import Optional, List
 import os
+from datetime import datetime
 
 from app.db.session import get_db
 from app.services.auth_service import get_current_user
@@ -125,6 +126,8 @@ def list_lost_and_found_reports(
     hide_closed: bool = Query(False, description="Hide closed/returned items (AC4)"),
     my_reports: bool = Query(False, description="Filter to current user's reports only"),
     search: Optional[str] = Query(None, description="Search query keyword across items"),
+    date_from: Optional[datetime] = Query(None, description="Filter items reported on or after this date (ISO format)"),
+    date_to: Optional[datetime] = Query(None, description="Filter items reported on or before this date (ISO format)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -132,7 +135,7 @@ def list_lost_and_found_reports(
     List lost and found item reports with optional filters.
     
     - AC1: Displays active item reports on page load
-    - AC2: Filter by category, hostel type, report type, or search keywords
+    - AC2: Filter by category, hostel type, report type, date range, or search keywords
     - AC4: Use hide_closed=true to exclude Closed/Returned items from active listings
     """
     service = LostAndFoundService(db)
@@ -149,6 +152,8 @@ def list_lost_and_found_reports(
         hostel_type=hostel_type,
         hide_closed=hide_closed,
         search=search,
+        date_from=date_from,
+        date_to=date_to,
     )
     
     return LostAndFoundListResponse(

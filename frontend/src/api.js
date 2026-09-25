@@ -32,14 +32,20 @@ export const authAPI = {
 };
 
 export const reportsAPI = {
-  /** List complaints with optional status, hostel_type, and category filters. */
-  list: (status, hostelType, category, foodRelated) => {
-    const params = {};
-    if (status)      params.status      = status;
-    if (hostelType)  params.hostel_type = hostelType;
-    if (category)    params.category    = category;
-    if (foodRelated !== undefined && foodRelated !== null) params.food_related = foodRelated;
-    return api.get('/reports', { params });
+  /** List complaints with optional filters per HOSTELCARE-CROSS-003. */
+  list: (params = {}) => {
+    const p = {};
+    if (params.status)        p.status        = params.status;
+    if (params.hostelType)    p.hostel_type   = params.hostelType;
+    if (params.category)      p.category      = params.category;
+    if (params.block)         p.block         = params.block;
+    if (params.floor)         p.floor         = params.floor;
+    if (params.assignedTeam)  p.assigned_team = params.assignedTeam;
+    if (params.dateFrom)      p.date_from     = params.dateFrom;
+    if (params.dateTo)        p.date_to       = params.dateTo;
+    if (params.reporterId)    p.reporter_id   = params.reporterId;
+    if (params.foodRelated !== undefined && params.foodRelated !== null) p.food_related = params.foodRelated;
+    return api.get('/reports', { params: p });
   },
   /** Return hostel types, per-hostel blocks, and complaint categories for dropdowns. */
   getHostelConfig: () => api.get('/reports/hostel-config'),

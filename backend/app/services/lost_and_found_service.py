@@ -69,6 +69,8 @@ class LostAndFoundService:
         hostel_type: Optional[str] = None,
         hide_closed: bool = False,
         search: Optional[str] = None,
+        date_from: Optional[datetime] = None,
+        date_to: Optional[datetime] = None,
     ) -> List[LostAndFoundItemReport]:
         """
         List reports with filtering.
@@ -82,6 +84,8 @@ class LostAndFoundService:
             reporter_id=reporter_id,
             hostel_type=hostel_type,
             search=search,
+            date_from=date_from,
+            date_to=date_to,
         )
         
         # AC4/AC5: Filter out closed items if requested
