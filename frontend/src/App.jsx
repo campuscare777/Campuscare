@@ -30,7 +30,8 @@ import {
   TrendingDown,
   ShieldCheck,
   Check,
-  Ticket
+  Ticket,
+  Package
 } from 'lucide-react';
 import {
   BarChart,
@@ -53,6 +54,7 @@ import { authAPI, reportsAPI, tokensAPI, rewardsAPI, dashboardAPI } from './api'
 import MaintenanceReportForm from './MaintenanceReportForm';
 import MissingItemReportForm from './MissingItemReportForm';
 import FoundItemReportForm from './FoundItemReportForm';
+import LostAndFoundListing from './LostAndFoundListing';
 import StaffReportsQueue from './StaffReportsQueue';
 import StudentReportsView from './StudentReportsView';
 import RedemptionVerification from './RedemptionVerification';
@@ -475,6 +477,35 @@ function ReportsPage() {
   );
 }
 
+function LostAndFoundPage() {
+  const [view, setView] = useState('listing'); // 'listing' | 'report-missing' | 'report-found'
+
+  if (view === 'report-missing') {
+    return (
+      <MissingItemReportForm
+        onCancel={() => setView('listing')}
+        onSuccess={() => setView('listing')}
+      />
+    );
+  }
+
+  if (view === 'report-found') {
+    return (
+      <FoundItemReportForm
+        onCancel={() => setView('listing')}
+        onSuccess={() => setView('listing')}
+      />
+    );
+  }
+
+  return (
+    <LostAndFoundListing
+      onReportMissing={() => setView('report-missing')}
+      onReportFound={() => setView('report-found')}
+    />
+  );
+}
+
 function Sidebar({ currentPage, onNavigate }) {
   const { user, logout } = useAuth();
   const isStudent = user?.role === 'student';
@@ -483,6 +514,7 @@ function Sidebar({ currentPage, onNavigate }) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'reports', label: 'Hostel Complaints', icon: FileText },
+    { id: 'lost-and-found', label: 'Lost & Found', icon: Package },
     ...(isStudent ? [{ id: 'tokens', label: 'Green Tokens', icon: Coins }] : []),
     ...(isStaff ? [{ id: 'redemptions', label: 'Redemption Verification', icon: Ticket }] : []),
     ...(isRewardAdmin ? [{ id: 'reward-management', label: 'Reward Catalog', icon: Gift }] : []),
@@ -813,6 +845,7 @@ function AppShell() {
   const pages = {
     dashboard: DashboardPage,
     reports: ReportsPage,
+    'lost-and-found': LostAndFoundPage,
     tokens: TokensPage,
     redemptions: RedemptionVerification,
     'reward-management': RewardManagementPage,

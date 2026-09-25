@@ -11,6 +11,7 @@ from app.schemas.lost_and_found import (
     LostAndFoundCreate,
     LostAndFoundUpdate,
     LostAndFoundStatusUpdate,
+    LostAndFoundClaimRequest,
     LostAndFoundResponse,
     LostAndFoundListResponse,
     LostAndFoundStatusHistoryResponse,
@@ -118,45 +119,61 @@ def list_lost_and_found_reports(
     status: Optional[str] = Query(None),
     reporter_id: Optional[int] = Query(None),
     hostel_type: Optional[str] = Query(None),
-    hide_closed: bool = Query(False, description="Hide closed/returned items (AC5)"),
+    hide_closed: bool = Query(False, description="Hide closed/returned items (AC4)"),
+    my_reports: bool = Query(False, description="Filter to current user's reports only"),
+    search: Optional[str] = Query(None, description="Search query keyword across items"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
     List lost and found item reports with optional filters.
     
-    - AC5: Use hide_closed=true to exclude Closed/Returned items
-    - Students see only their own reports
-    - Staff/Admin see all reports
+    - AC1: Displays active item reports on page load
+    - AC2: Filter by category, hostel type, report type, or search keywords
+    - AC4: Use hide_closed=true to exclude Closed/Returned items from active listings
     """
     service = LostAndFoundService(db)
     
-    # Apply role-based filtering
-    if current_user.role == "student":
-        # Students see only their own reports
-        reports = service.list_reports(
-            report_type=report_type,
-            item_category=item_category,
-            status=status,
-            reporter_id=current_user.id,
-            hostel_type=hostel_type,
-            hide_closed=hide_closed,
-        )
-    else:
-        # Staff/Admin see all reports
-        reports = service.list_reports(
-            report_type=report_type,
-            item_category=item_category,
-            status=status,
-            reporter_id=reporter_id,
-            hostel_type=hostel_type,
-            hide_closed=hide_closed,
-        )
+    target_reporter_id = reporter_id
+    if my_reports:
+        target_reporter_id = current_user.id
+
+    reports = service.list_reports(
+        report_type=report_type,
+        item_category=item_category,
+        status=status,
+        reporter_id=target_reporter_id,
+        hostel_type=hostel_type,
+        hide_closed=hide_closed,
+        search=search,
+    )
     
     return LostAndFoundListResponse(
         reports=[LostAndFoundResponse.model_validate(r) for r in reports],
         total=len(reports),
     )
+
+
+@router.post("/{item_report_id}/claim", response_model=LostAndFoundResponse)
+def claim_lost_and_found_report(
+    item_report_id: int,
+    payload: Optional[LostAndFoundClaimRequest] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Submit a claim request on a lost/found item report (AC5).
+    
+    Transitions item status to 'Claim Requested' for authorized staff verification.
+    """
+    service = LostAndFoundService(db)
+    report = service.claim_report(
+        item_report_id=item_report_id,
+        claimant_id=current_user.id,
+        claim_notes=payload.claim_notes if payload else None,
+        proof_details=payload.proof_details if payload else None,
+    )
+    return LostAndFoundResponse.model_validate(report)
 
 
 @router.get("/{item_report_id}", response_model=LostAndFoundResponse)
