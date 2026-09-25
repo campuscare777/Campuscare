@@ -66,6 +66,7 @@ class LostAndFoundService:
         reporter_id: Optional[int] = None,
         hostel_type: Optional[str] = None,
         hide_closed: bool = False,
+        search: Optional[str] = None,
     ) -> List[LostAndFoundItemReport]:
         """
         List reports with filtering.
@@ -78,9 +79,10 @@ class LostAndFoundService:
             status=status,
             reporter_id=reporter_id,
             hostel_type=hostel_type,
+            search=search,
         )
         
-        # AC5: Filter out closed items if requested
+        # AC4/AC5: Filter out closed items if requested
         if hide_closed:
             reports = [r for r in reports if r.status not in ["Closed", "Returned"]]
         
@@ -91,6 +93,46 @@ class LostAndFoundService:
                 setattr(r, "reporter_name", user.full_name or user.username)
         
         return reports
+
+    def claim_report(
+        self,
+        item_report_id: int,
+        claimant_id: int,
+        claim_notes: Optional[str] = None,
+        proof_details: Optional[str] = None,
+    ) -> LostAndFoundItemReport:
+        """
+        AC5: Resident submits claim request on lost/found item.
+        Transitions status to 'Claim Requested' for staff verification.
+        """
+        report = self.get_report(item_report_id)
+        if report.status in ["Returned", "Closed"]:
+            raise HTTPException(status_code=400, detail="Cannot claim an item that is already returned or closed")
+
+        old_status = report.status
+        report.status = "Claim Requested"
+
+        user = self.db.query(User).filter(User.id == claimant_id).first()
+        claimant_name = user.full_name or user.username if user else f"User #{claimant_id}"
+        notes = []
+        if proof_details:
+            notes.append(f"Proof: {proof_details}")
+        if claim_notes:
+            notes.append(f"Notes: {claim_notes}")
+        reason_str = f"Claim submitted by {claimant_name} ({user.role if user else 'resident'})"
+        if notes:
+            reason_str += " - " + "; ".join(notes)
+
+        history = LostAndFoundStatusHistory(
+            item_report_id=item_report_id,
+            from_status=old_status,
+            to_status="Claim Requested",
+            changed_by_id=claimant_id,
+            reason=reason_str,
+            changed_at=datetime.utcnow(),
+        )
+        self.repo.add_status_history(history)
+        return self.repo.update(report)
 
     def update_status(
         self,

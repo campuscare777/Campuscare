@@ -24,6 +24,13 @@ class LostAndFoundStatusUpdate(BaseModel):
     closed_at: Optional[datetime] = None
 
 
+class LostAndFoundClaimRequest(BaseModel):
+    """Input for resident claiming a lost/found item report."""
+    claim_notes: Optional[str] = None
+    proof_details: Optional[str] = None
+
+
+
 class LostAndFoundUpdate(BaseModel):
     """Input for editing lost and found details."""
     report_type: Optional[str] = None

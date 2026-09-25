@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from app.models.lost_and_found import LostAndFoundItemReport, LostAndFoundStatusHistory
 from datetime import datetime
 from typing import Optional, List
@@ -21,18 +21,29 @@ class LostAndFoundRepository:
         status: Optional[str] = None,
         reporter_id: Optional[int] = None,
         hostel_type: Optional[str] = None,
+        search: Optional[str] = None,
     ) -> List[LostAndFoundItemReport]:
         query = self.db.query(LostAndFoundItemReport)
-        if report_type:
+        if report_type and report_type != "All":
             query = query.filter(LostAndFoundItemReport.report_type == report_type)
-        if item_category:
+        if item_category and item_category != "All":
             query = query.filter(LostAndFoundItemReport.item_category == item_category)
-        if status:
+        if status and status != "All":
             query = query.filter(LostAndFoundItemReport.status == status)
         if reporter_id:
             query = query.filter(LostAndFoundItemReport.reporter_id == reporter_id)
-        if hostel_type:
+        if hostel_type and hostel_type != "All":
             query = query.filter(LostAndFoundItemReport.hostel_type == hostel_type)
+        if search and search.strip():
+            term = f"%{search.strip()}%"
+            query = query.filter(
+                or_(
+                    LostAndFoundItemReport.item_name.ilike(term),
+                    LostAndFoundItemReport.description.ilike(term),
+                    LostAndFoundItemReport.location.ilike(term),
+                    LostAndFoundItemReport.identifying_details.ilike(term),
+                )
+            )
         return query.order_by(LostAndFoundItemReport.created_at.desc()).all()
 
     def create(self, report: LostAndFoundItemReport) -> LostAndFoundItemReport:

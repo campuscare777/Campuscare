@@ -87,9 +87,20 @@ export const dashboardAPI = {
   get: () => api.get('/dashboard'),
 };
 export const lostAndFoundAPI = {
+  /** List lost & found items with optional filters (category, hostelType, reportType, status, hideClosed, myReports, search). */
+  list: (params) => api.get('/lost-and-found', { params }),
+  /** Retrieve a single item report by ID. */
+  get: (id) => api.get(`/lost-and-found/${id}`),
+  /** Create a new lost or found report (supports multipart/form-data or JSON). */
   create: (formData) =>
     api.post('/lost-and-found', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+  /** Resident submits a claim request for an item (AC5). */
+  claim: (id, data) => api.post(`/lost-and-found/${id}/claim`, data),
+  /** Staff / Admin updates status of a lost/found report. */
+  updateStatus: (id, data) => api.patch(`/lost-and-found/${id}/status`, data),
+  /** Get audit history of status changes. */
+  getHistory: (id) => api.get(`/lost-and-found/${id}/history`),
 };
 export default api;
