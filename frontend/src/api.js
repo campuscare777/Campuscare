@@ -96,8 +96,18 @@ export const lostAndFoundAPI = {
     api.post('/lost-and-found', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
-  /** Resident submits a claim request for an item (AC5). */
+  /** Resident submits a claim request for an item (AC1, AC2). */
   claim: (id, data) => api.post(`/lost-and-found/${id}/claim`, data),
+  /** List item claims with optional filters (item_report_id, status, my_claims). */
+  listClaims: (params) => api.get('/lost-and-found/claims', { params }),
+  /** Retrieve claims for a specific item report. */
+  getItemClaims: (id) => api.get(`/lost-and-found/${id}/claims`),
+  /** Staff reviews and approves a claim (AC3). */
+  verifyClaim: (claimId, data) => api.post(`/lost-and-found/claims/${claimId}/verify`, data),
+  /** Staff rejects a claim with mandatory reason (AC4). */
+  rejectClaim: (claimId, data) => api.post(`/lost-and-found/claims/${claimId}/reject`, data),
+  /** Staff confirms item handover to verified claimant (AC5). */
+  handoverItem: (claimId, data) => api.post(`/lost-and-found/claims/${claimId}/handover`, data),
   /** Staff / Admin updates status of a lost/found report. */
   updateStatus: (id, data) => api.patch(`/lost-and-found/${id}/status`, data),
   /** Get audit history of status changes. */

@@ -12,6 +12,8 @@ frontend/.env
 
 # Database
 backend/app.db
+*.db
+
 
 # Frontend
 frontend/node_modules/

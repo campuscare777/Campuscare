@@ -3,7 +3,7 @@ from typing import Optional, List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
-from app.models.lost_and_found import LostAndFoundItemReport, LostAndFoundStatusHistory
+from app.models.lost_and_found import LostAndFoundItemReport, LostAndFoundStatusHistory, LostAndFoundClaim
 from app.models.user import User
 from app.repositories.lost_and_found_repository import LostAndFoundRepository
 from app.schemas.lost_and_found import LostAndFoundCreate, LostAndFoundStatusUpdate, LostAndFoundUpdate
@@ -21,7 +21,7 @@ ALLOWED_STATUSES = {
     "Rejected",
 }
 
-STAFF_ROLES = ["admin", "warden", "staff", "hostel_staff"]
+STAFF_ROLES = ["admin", "warden", "staff", "hostel_staff", "maintenance", "food_staff"]
 
 
 class LostAndFoundService:
@@ -100,14 +100,35 @@ class LostAndFoundService:
         claimant_id: int,
         claim_notes: Optional[str] = None,
         proof_details: Optional[str] = None,
+        identifying_info: Optional[str] = None,
+        contact_number: Optional[str] = None,
     ) -> LostAndFoundItemReport:
         """
-        AC5: Resident submits claim request on lost/found item.
-        Transitions status to 'Claim Requested' for staff verification.
+        AC1, AC2: Resident submits claim request on lost/found item.
+        Creates a LostAndFoundClaim and transitions item status to 'Claim Requested' for staff verification.
         """
         report = self.get_report(item_report_id)
         if report.status in ["Returned", "Closed"]:
             raise HTTPException(status_code=400, detail="Cannot claim an item that is already returned or closed")
+
+        # Resolve identifying information from identifying_info or proof_details
+        effective_proof = (identifying_info or proof_details or claim_notes or "").strip()
+        if not effective_proof:
+            raise HTTPException(
+                status_code=400,
+                detail="Identifying information or proof details is required to submit a claim",
+            )
+
+        # Create persistent claim request (AC2)
+        claim = LostAndFoundClaim(
+            item_report_id=item_report_id,
+            claimant_id=claimant_id,
+            identifying_info=effective_proof,
+            contact_number=contact_number.strip() if contact_number else None,
+            claim_notes=claim_notes.strip() if claim_notes else None,
+            status="Submitted",
+        )
+        self.repo.create_claim(claim)
 
         old_status = report.status
         report.status = "Claim Requested"
@@ -115,8 +136,8 @@ class LostAndFoundService:
         user = self.db.query(User).filter(User.id == claimant_id).first()
         claimant_name = user.full_name or user.username if user else f"User #{claimant_id}"
         notes = []
-        if proof_details:
-            notes.append(f"Proof: {proof_details}")
+        if effective_proof:
+            notes.append(f"Proof: {effective_proof}")
         if claim_notes:
             notes.append(f"Notes: {claim_notes}")
         reason_str = f"Claim submitted by {claimant_name} ({user.role if user else 'resident'})"
@@ -133,6 +154,186 @@ class LostAndFoundService:
         )
         self.repo.add_status_history(history)
         return self.repo.update(report)
+
+    def get_claim(self, claim_id: int) -> LostAndFoundClaim:
+        """Retrieve claim by ID."""
+        claim = self.repo.get_claim(claim_id)
+        if not claim:
+            raise HTTPException(status_code=404, detail="Claim request not found")
+        self._enrich_claim(claim)
+        return claim
+
+    def _enrich_claim(self, claim: LostAndFoundClaim) -> None:
+        """Helper to attach claimant and item metadata to a claim object."""
+        claimant = self.db.query(User).filter(User.id == claim.claimant_id).first()
+        if claimant:
+            setattr(claim, "claimant_name", claimant.full_name or claimant.username)
+            setattr(claim, "claimant_role", claimant.role)
+        item = self.repo.get_by_id(claim.item_report_id)
+        if item:
+            setattr(claim, "item_name", item.item_name)
+            setattr(claim, "item_category", item.item_category)
+            setattr(claim, "item_location", item.location)
+            setattr(claim, "item_status", item.status)
+
+    def list_claims(
+        self,
+        item_report_id: Optional[int] = None,
+        claimant_id: Optional[int] = None,
+        status: Optional[str] = None,
+    ) -> List[LostAndFoundClaim]:
+        """List claims with optional filters and attached metadata."""
+        claims = self.repo.get_claims(
+            item_report_id=item_report_id,
+            claimant_id=claimant_id,
+            status=status,
+        )
+        for c in claims:
+            self._enrich_claim(c)
+        return claims
+
+    def review_claim(
+        self,
+        claim_id: int,
+        staff_user: User,
+        action: str,
+        rejection_reason: Optional[str] = None,
+        notes: Optional[str] = None,
+    ) -> LostAndFoundClaim:
+        """
+        AC3 & AC4: Staff approves or rejects a claim.
+        - Approve (AC3): claim status -> 'Verified', item status -> 'Verified'
+        - Reject (AC4): requires rejection reason, claim status -> 'Rejected', stores reason shown to claimant
+        """
+        if staff_user.role not in STAFF_ROLES:
+            raise HTTPException(
+                status_code=403,
+                detail="Only authorized staff can review item claims",
+            )
+
+        claim = self.get_claim(claim_id)
+        report = self.get_report(claim.item_report_id)
+        staff_name = staff_user.full_name or staff_user.username
+
+        if action.lower() == "approve":
+            claim.status = "Verified"
+            claim.verified_by_id = staff_user.id
+            claim.verified_by_name = staff_name
+            claim.verified_at = datetime.utcnow()
+            claim.rejection_reason = None
+            self.repo.update_claim(claim)
+
+            # Update item report status to 'Verified' (AC3)
+            old_status = report.status
+            report.status = "Verified"
+            report.assigned_staff = staff_name
+            self.repo.update(report)
+
+            # Audit history
+            history = LostAndFoundStatusHistory(
+                item_report_id=report.item_report_id,
+                from_status=old_status,
+                to_status="Verified",
+                changed_by_id=staff_user.id,
+                reason=f"Claim #{claim.claim_id} approved and verified by staff {staff_name}. {notes or ''}".strip(),
+                changed_at=datetime.utcnow(),
+            )
+            self.repo.add_status_history(history)
+
+        elif action.lower() == "reject":
+            if not rejection_reason or not rejection_reason.strip():
+                raise HTTPException(
+                    status_code=400,
+                    detail="A rejection reason is required when rejecting a claim",
+                )
+
+            claim.status = "Rejected"
+            claim.rejection_reason = rejection_reason.strip()
+            claim.verified_by_id = staff_user.id
+            claim.verified_by_name = staff_name
+            claim.verified_at = datetime.utcnow()
+            self.repo.update_claim(claim)
+
+            # If there are no other active pending claims on this item, revert item status
+            pending_claims = [
+                c for c in self.repo.get_claims(item_report_id=report.item_report_id)
+                if c.claim_id != claim.claim_id and c.status in ["Submitted", "Verified"]
+            ]
+            if not pending_claims:
+                old_status = report.status
+                report.status = "Published" if report.report_type == "Lost" else "Received by Staff"
+                self.repo.update(report)
+                history = LostAndFoundStatusHistory(
+                    item_report_id=report.item_report_id,
+                    from_status=old_status,
+                    to_status=report.status,
+                    changed_by_id=staff_user.id,
+                    reason=f"Claim #{claim.claim_id} rejected by {staff_name}: {rejection_reason.strip()}",
+                    changed_at=datetime.utcnow(),
+                )
+                self.repo.add_status_history(history)
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid review action '{action}'. Must be 'approve' or 'reject'.",
+            )
+
+        self._enrich_claim(claim)
+        return claim
+
+    def confirm_handover(
+        self,
+        claim_id: int,
+        staff_user: User,
+        handover_notes: Optional[str] = None,
+    ) -> LostAndFoundClaim:
+        """
+        AC5: Given an item is handed over, when staff confirm the handover,
+        then the item report status changes to 'Returned'.
+        """
+        if staff_user.role not in STAFF_ROLES:
+            raise HTTPException(
+                status_code=403,
+                detail="Only authorized staff can confirm item handover",
+            )
+
+        claim = self.get_claim(claim_id)
+        if claim.status not in ["Verified", "Submitted"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot confirm handover for claim with status '{claim.status}'. Claim must be Verified.",
+            )
+
+        staff_name = staff_user.full_name or staff_user.username
+        now_dt = datetime.utcnow()
+
+        # Update claim
+        claim.status = "Returned"
+        claim.handed_over_at = now_dt
+        self.repo.update_claim(claim)
+
+        # Update item report (AC5)
+        report = self.get_report(claim.item_report_id)
+        old_status = report.status
+        report.status = "Returned"
+        report.closed_at = now_dt
+        report.assigned_staff = staff_name
+        self.repo.update(report)
+
+        # Audit history
+        history = LostAndFoundStatusHistory(
+            item_report_id=report.item_report_id,
+            from_status=old_status,
+            to_status="Returned",
+            changed_by_id=staff_user.id,
+            reason=f"Item handover confirmed to claimant #{claim.claimant_id} by staff {staff_name}. {handover_notes or ''}".strip(),
+            changed_at=now_dt,
+        )
+        self.repo.add_status_history(history)
+
+        self._enrich_claim(claim)
+        return claim
+
 
     def update_status(
         self,

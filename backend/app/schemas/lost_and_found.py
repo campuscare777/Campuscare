@@ -25,9 +25,55 @@ class LostAndFoundStatusUpdate(BaseModel):
 
 
 class LostAndFoundClaimRequest(BaseModel):
-    """Input for resident claiming a lost/found item report."""
-    claim_notes: Optional[str] = None
+    """Input for resident claiming a lost/found item report (AC1, AC2)."""
+    identifying_info: Optional[str] = None
     proof_details: Optional[str] = None
+    contact_number: Optional[str] = None
+    claim_notes: Optional[str] = None
+
+
+class LostAndFoundClaimReview(BaseModel):
+    """Input for staff reviewing a claim (AC3, AC4)."""
+    action: str  # "approve" | "reject"
+    rejection_reason: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class LostAndFoundClaimHandover(BaseModel):
+    """Input for staff confirming item handover (AC5)."""
+    handover_notes: Optional[str] = None
+
+
+class LostAndFoundClaimResponse(BaseModel):
+    """Claim representation returned by API."""
+    claim_id: int
+    item_report_id: int
+    claimant_id: int
+    claimant_name: Optional[str] = None
+    claimant_role: Optional[str] = None
+    identifying_info: str
+    contact_number: Optional[str] = None
+    claim_notes: Optional[str] = None
+    status: str
+    rejection_reason: Optional[str] = None
+    verified_by_id: Optional[int] = None
+    verified_by_name: Optional[str] = None
+    verified_at: Optional[datetime] = None
+    handed_over_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    item_name: Optional[str] = None
+    item_category: Optional[str] = None
+    item_location: Optional[str] = None
+    item_status: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @computed_field
+    @property
+    def id(self) -> int:
+        return self.claim_id
+
 
 
 
