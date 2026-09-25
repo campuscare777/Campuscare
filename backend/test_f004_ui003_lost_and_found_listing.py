@@ -293,6 +293,55 @@ def test_ac3_item_details_page_loads_with_required_fields(client, test_db):
     assert data["reporter_name"] == "Resident Bob"
 
 
+def test_ac3_access_permissions_non_reporter_blocked_on_submitted(client, test_db):
+    """
+    AC3: Submitted/Under Review items from another reporter are private.
+    A different resident should receive 403 when accessing them directly.
+    """
+    student2 = test_db["student2"]          # different from item reporter (student1)
+    item = test_db["item_active_lost"]      # reporter = student1, status = Submitted
+    token = create_access_token(data={"sub": str(student2.id)})
+    headers = {"Authorization": f"Bearer {token}"}
+
+    res = client.get(f"/api/lost-and-found/{item.item_report_id}", headers=headers)
+    assert res.status_code == 403, (
+        f"Expected 403 for non-reporter on Submitted item, got {res.status_code}: {res.text}"
+    )
+    assert "not yet publicly visible" in res.json()["detail"]
+
+
+def test_ac3_access_permissions_non_reporter_allowed_on_published(client, test_db):
+    """
+    AC3: Published / Received-by-Staff items are visible to all authenticated residents.
+    """
+    student1 = test_db["student1"]
+    item_published = test_db["item_clothing_found"]  # reporter = student1, status = Published
+    student2 = test_db["student2"]                   # different reporter
+
+    # student2 (not the reporter) should be able to view a Published item
+    token2 = create_access_token(data={"sub": str(student2.id)})
+    headers2 = {"Authorization": f"Bearer {token2}"}
+
+    res = client.get(f"/api/lost-and-found/{item_published.item_report_id}", headers=headers2)
+    assert res.status_code == 200, (
+        f"Expected 200 for Published item viewed by non-reporter, got {res.status_code}: {res.text}"
+    )
+    data = res.json()
+    assert data["status"] == "Published"
+    assert data.get("image_reference") is None  # no image for this item
+
+    # staff can always see any item (even Submitted) — AC3 full access for staff
+    warden = test_db["warden"]
+    warden_token = create_access_token(data={"sub": str(warden.id)})
+    item_submitted = test_db["item_active_lost"]  # status = Submitted
+    res_staff = client.get(
+        f"/api/lost-and-found/{item_submitted.item_report_id}",
+        headers={"Authorization": f"Bearer {warden_token}"},
+    )
+    assert res_staff.status_code == 200
+    assert res_staff.json()["status"] == "Submitted"
+
+
 # ── AC4: Closed/Returned Items Marked as Closed or Excluded from Active Listings
 
 def test_ac4_closed_items_marked_or_removed_from_active_listings(client, test_db):
