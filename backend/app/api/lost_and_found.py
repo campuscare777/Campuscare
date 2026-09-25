@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
 from typing import Optional, List
 import os
@@ -21,55 +21,87 @@ router = APIRouter(prefix="/api/lost-and-found", tags=["lost-and-found"])
 
 @router.post("", response_model=LostAndFoundResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=LostAndFoundResponse, status_code=status.HTTP_201_CREATED, include_in_schema=False)
-def create_lost_and_found_report(
-    report_type: str = Form(...),
-    item_category: str = Form(...),
-    item_name: str = Form(...),
-    location: str = Form(...),
-    description: Optional[str] = Form(None),
-    hostel_type: Optional[str] = Form(None),
-    date_lost_or_found: Optional[str] = Form(None),
-    identifying_details: Optional[str] = Form(None),
-    image: Optional[UploadFile] = File(None),
+async def create_lost_and_found_report(
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
-    Create a new lost or found item report (AC1).
+    Create a new lost or found item report (AC1, AC2).
     
-    - Accepts image upload (AC4)
+    - Accepts JSON payload or multipart/form-data image upload (AC3)
     - Generates unique item_report_id as reference ID
     - Validates all required fields
     """
-    # Handle image upload (AC4)
+    content_type = request.headers.get("content-type", "")
     image_path = None
-    if image and image.filename and image.filename.strip():
-        upload_dir = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "lost-and-found")
-        os.makedirs(upload_dir, exist_ok=True)
-        file_path = os.path.join(upload_dir, image.filename)
-        with open(file_path, "wb") as f:
-            f.write(image.file.read())
-        image_path = f"uploads/lost-and-found/{image.filename}"
+
+    if "application/json" in content_type:
+        body = await request.json()
+        report_type = body.get("report_type")
+        item_category = body.get("item_category")
+        item_name = body.get("item_name")
+        location = body.get("location")
+        description = body.get("description")
+        hostel_type = body.get("hostel_type")
+        date_lost_or_found = body.get("date_lost_or_found")
+        identifying_details = body.get("identifying_details")
+        image_path = body.get("image_reference")
+    else:
+        form = await request.form()
+        report_type = form.get("report_type")
+        item_category = form.get("item_category")
+        item_name = form.get("item_name")
+        location = form.get("location")
+        description = form.get("description")
+        hostel_type = form.get("hostel_type")
+        date_lost_or_found = form.get("date_lost_or_found")
+        identifying_details = form.get("identifying_details")
+        image = form.get("image")
+        if image and hasattr(image, "filename") and image.filename and image.filename.strip():
+            upload_dir = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "lost-and-found")
+            os.makedirs(upload_dir, exist_ok=True)
+            file_path = os.path.join(upload_dir, image.filename)
+            content = await image.read()
+            with open(file_path, "wb") as f:
+                f.write(content)
+            image_path = f"uploads/lost-and-found/{image.filename}"
+
+    # Validate required fields
+    missing = []
+    if not report_type:
+        missing.append("report_type")
+    if not item_category:
+        missing.append("item_category")
+    if not item_name:
+        missing.append("item_name")
+    if not location:
+        missing.append("location")
+    if missing:
+        raise HTTPException(
+            status_code=422,
+            detail=[{"loc": ["body", f], "msg": "Field required", "type": "missing"} for f in missing]
+        )
 
     # Parse date if provided
     from datetime import datetime
     date_lost_or_found_dt = None
     if date_lost_or_found:
         try:
-            date_lost_or_found_dt = datetime.fromisoformat(date_lost_or_found)
+            date_lost_or_found_dt = datetime.fromisoformat(str(date_lost_or_found))
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid date format. Use ISO format (YYYY-MM-DD)")
 
     # Create payload
     payload = LostAndFoundCreate(
-        report_type=report_type.strip(),
-        item_category=item_category.strip(),
-        item_name=item_name.strip(),
-        location=location.strip(),
-        description=description,
-        hostel_type=hostel_type,
+        report_type=str(report_type).strip(),
+        item_category=str(item_category).strip(),
+        item_name=str(item_name).strip(),
+        location=str(location).strip(),
+        description=str(description).strip() if description else None,
+        hostel_type=str(hostel_type).strip() if hostel_type else None,
         date_lost_or_found=date_lost_or_found_dt,
-        identifying_details=identifying_details,
+        identifying_details=str(identifying_details).strip() if identifying_details else None,
         image_reference=image_path,
     )
 

@@ -12,6 +12,7 @@ from app.schemas.lost_and_found import LostAndFoundCreate, LostAndFoundStatusUpd
 ALLOWED_STATUSES = {
     "Submitted",
     "Under Review",
+    "Received by Staff",
     "Published",
     "Claim Requested",
     "Verified",
