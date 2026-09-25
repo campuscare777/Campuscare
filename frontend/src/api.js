@@ -113,4 +113,16 @@ export const lostAndFoundAPI = {
   /** Get audit history of status changes. */
   getHistory: (id) => api.get(`/lost-and-found/${id}/history`),
 };
+
+export const notificationsAPI = {
+  /** List notifications with optional unread_only, limit, offset params */
+  list: (params) => api.get('/notifications', { params }),
+  /** Get count of unread notifications */
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+  /** Mark single notification as read */
+  markRead: (id) => api.patch(`/notifications/${id}/read`),
+  /** Mark all notifications as read */
+  markAllRead: () => api.post('/notifications/mark-all-read'),
+};
+
 export default api;

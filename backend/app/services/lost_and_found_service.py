@@ -7,6 +7,7 @@ from app.models.lost_and_found import LostAndFoundItemReport, LostAndFoundStatus
 from app.models.user import User, COMPLAINT_STAFF_ROLES
 from app.repositories.lost_and_found_repository import LostAndFoundRepository
 from app.schemas.lost_and_found import LostAndFoundCreate, LostAndFoundStatusUpdate, LostAndFoundUpdate
+from app.services.notification_service import NotificationService
 
 
 ALLOWED_STATUSES = {
@@ -28,6 +29,7 @@ class LostAndFoundService:
     def __init__(self, db: Session):
         self.db = db
         self.repo = LostAndFoundRepository(db)
+        self.notif_service = NotificationService(db)
 
     def create_report(self, reporter_id: int, payload: LostAndFoundCreate) -> LostAndFoundItemReport:
         """AC1: Create a new lost/found report with unique reference ID."""
@@ -153,7 +155,21 @@ class LostAndFoundService:
             changed_at=datetime.utcnow(),
         )
         self.repo.add_status_history(history)
-        return self.repo.update(report)
+        updated_report = self.repo.update(report)
+
+        # Notify claimant of submitted claim
+        self.notif_service.create_notification(
+            user_id=claimant_id,
+            title="Claim Submitted",
+            message=f"Your claim for found item '{report.item_name}' has been submitted and is pending staff verification.",
+            event_type="claim_submitted",
+            reference_id=claim.claim_id,
+            reference_type="claim",
+        )
+
+        return updated_report
+
+    submit_claim = claim_report
 
     def get_claim(self, claim_id: int) -> LostAndFoundClaim:
         """Retrieve claim by ID."""
@@ -240,6 +256,14 @@ class LostAndFoundService:
             )
             self.repo.add_status_history(history)
 
+            # AC3: Notify claimant of claim approval / verification
+            self.notif_service.notify_claim_status_updated(
+                user_id=claim.claimant_id,
+                claim_id=claim.claim_id,
+                item_title=report.item_name,
+                new_status="Verified",
+            )
+
         elif action.lower() == "reject":
             if not rejection_reason or not rejection_reason.strip():
                 raise HTTPException(
@@ -253,6 +277,15 @@ class LostAndFoundService:
             claim.verified_by_name = staff_name
             claim.verified_at = datetime.utcnow()
             self.repo.update_claim(claim)
+
+            # AC3: Notify claimant of claim rejection with reason
+            self.notif_service.notify_claim_status_updated(
+                user_id=claim.claimant_id,
+                claim_id=claim.claim_id,
+                item_title=report.item_name,
+                new_status="Rejected",
+                rejection_reason=rejection_reason.strip(),
+            )
 
             # If there are no other active pending claims on this item, revert item status
             pending_claims = [
@@ -330,6 +363,13 @@ class LostAndFoundService:
             changed_at=now_dt,
         )
         self.repo.add_status_history(history)
+
+        # Notify claimant of handover completion
+        self.notif_service.notify_item_handover_confirmed(
+            user_id=claim.claimant_id,
+            item_id=report.item_report_id,
+            item_title=report.item_name,
+        )
 
         self._enrich_claim(claim)
         return claim

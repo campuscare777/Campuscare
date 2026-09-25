@@ -83,6 +83,17 @@ class RewardRedemptionService:
         )
         transaction = self.token_repo.add_transaction(transaction)
 
+        # Notify student of redemption
+        from app.services.notification_service import NotificationService
+        notif_service = NotificationService(self.db)
+        notif_service.notify_redemption_created(
+            user_id=student_id,
+            reward_name=reward.name,
+            voucher_code=voucher_ref,
+            token_cost=reward.token_cost,
+            remaining_balance=balance.balance,
+        )
+
         return {
             "message": "Reward redeemed successfully",
             "reward_name": reward.name,
@@ -96,6 +107,8 @@ class RewardRedemptionService:
 
     def fulfill_redemption(self, voucher_reference: str, staff_id: int) -> dict:
         """Staff calls this to mark a voucher as fulfilled after handing over the reward."""
+        from app.repositories.reward_repository import RewardCatalogRepository
+        from app.services.notification_service import NotificationService
         voucher_reference = voucher_reference.strip().upper()
         tx = self.token_repo.get_by_redemption_reference(voucher_reference)
         if not tx:
@@ -104,6 +117,18 @@ class RewardRedemptionService:
             raise HTTPException(status_code=400, detail="This voucher has already been fulfilled")
 
         self.token_repo.fulfill_transaction(tx)
+
+        reward_repo = RewardCatalogRepository(self.db)
+        reward = reward_repo.get_by_id(tx.related_reward_id)
+        reward_name = reward.name if reward else "Reward"
+
+        notif_service = NotificationService(self.db)
+        notif_service.notify_redemption_fulfilled(
+            user_id=tx.student_id,
+            reward_name=reward_name,
+            voucher_code=voucher_reference,
+        )
+
         return {
             "message": "Redemption fulfilled successfully",
             "voucher_reference": voucher_reference,

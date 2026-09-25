@@ -58,6 +58,7 @@ import LostAndFoundListing from './LostAndFoundListing';
 import StaffReportsQueue from './StaffReportsQueue';
 import StudentReportsView from './StudentReportsView';
 import RedemptionVerification from './RedemptionVerification';
+import NotificationCenter from './NotificationCenter';
 
 function LoginPage() {
   const { login, loading } = useAuth();
@@ -893,6 +894,17 @@ function AppShell() {
     <div className="app-shell">
       <Sidebar currentPage={page} onNavigate={setPage} />
       <main className="main-content">
+        <header
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            marginBottom: 20,
+            gap: 14,
+          }}
+        >
+          <NotificationCenter onNavigate={setPage} />
+        </header>
         <Page />
       </main>
     </div>

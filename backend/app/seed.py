@@ -8,6 +8,15 @@ from app.models.user import User
 from app.models.report import Report, ReportStatusHistory
 from app.models.token import TokenBalance, TokenTransaction
 from app.models.reward import RewardCatalogItem
+from app.models.lost_and_found import LostAndFoundItemReport, LostAndFoundStatusHistory, LostAndFoundClaim
+from app.models.notification import (
+    Notification,
+    EVENT_COMPLAINT_SUBMITTED,
+    EVENT_COMPLAINT_VERIFIED,
+    EVENT_TOKEN_AWARDED,
+    EVENT_REDEMPTION_CREATED,
+    EVENT_CLAIM_APPROVED,
+)
 from app.services.auth_service import hash_password
 from datetime import datetime, timedelta
 import random
@@ -312,7 +321,65 @@ def seed():
         db.add_all(lnf_items)
         db.commit()
 
-        print(f"Seeded {len(users)} users, {len(reports)} hostel complaints, {len(rewards)} rewards, {len(lnf_items)} lost & found reports")
+        # ------------------------------------------------------------------
+        # Sample Notifications for Residents (HOSTELCARE-CROSS-002)
+        # ------------------------------------------------------------------
+        sample_notifs = [
+            Notification(
+                user_id=residents[0].id,
+                title="Green Tokens Awarded!",
+                message="You earned +10 Green Tokens for your verified complaint! (Complaint #1) Your new balance is 10 tokens.",
+                event_type=EVENT_TOKEN_AWARDED,
+                reference_id=1,
+                reference_type="token",
+                is_read=False,
+                created_at=datetime.utcnow() - timedelta(hours=2),
+            ),
+            Notification(
+                user_id=residents[0].id,
+                title="Complaint Status: Verified",
+                message="Your complaint #1 has been verified by staff.",
+                event_type=EVENT_COMPLAINT_VERIFIED,
+                reference_id=1,
+                reference_type="complaint",
+                is_read=False,
+                created_at=datetime.utcnow() - timedelta(hours=2, minutes=5),
+            ),
+            Notification(
+                user_id=residents[0].id,
+                title="Complaint Submitted",
+                message='Your complaint #1 has been submitted successfully: "Water pipe leaking near washroom entrance"',
+                event_type=EVENT_COMPLAINT_SUBMITTED,
+                reference_id=1,
+                reference_type="complaint",
+                is_read=True,
+                created_at=datetime.utcnow() - timedelta(days=2),
+            ),
+            Notification(
+                user_id=residents[1].id,
+                title="Complaint Status: In Progress",
+                message="Work on complaint #2 is now in progress.",
+                event_type="complaint_in_progress",
+                reference_id=2,
+                reference_type="complaint",
+                is_read=False,
+                created_at=datetime.utcnow() - timedelta(hours=5),
+            ),
+            Notification(
+                user_id=residents[2].id,
+                title="Item Handover Complete",
+                message="Handover confirmed for found item 'Student ID Card'. The item report status is now Returned.",
+                event_type="item_returned",
+                reference_id=3,
+                reference_type="lost_and_found",
+                is_read=True,
+                created_at=datetime.utcnow() - timedelta(days=3),
+            ),
+        ]
+        db.add_all(sample_notifs)
+        db.commit()
+
+        print(f"Seeded {len(users)} users, {len(reports)} hostel complaints, {len(rewards)} rewards, {len(lnf_items)} lost & found reports, {len(sample_notifs)} notifications")
         print("\nLogin credentials:")
         print("  admin        / admin123    (Admin)")
         print("  warden1      / warden123   (Warden)")

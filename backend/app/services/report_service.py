@@ -5,6 +5,7 @@ from app.models.report import Report, ReportStatusHistory
 from app.repositories.report_repository import ReportRepository
 from app.repositories.user_repository import UserRepository
 from app.services.token_service import TokenAwardService
+from app.services.notification_service import NotificationService
 from app.models.user import COMPLAINT_STAFF_ROLES
 
 # HostelCare valid status lifecycle
@@ -32,6 +33,7 @@ class ReportService:
         self.report_repo = ReportRepository(db)
         self.user_repo = UserRepository(db)
         self.token_service = TokenAwardService(db)
+        self.notif_service = NotificationService(db)
 
     def create_report(
         self,
@@ -76,7 +78,13 @@ class ReportService:
             photo_path=photo_path,
             status="Submitted",
         )
-        return self.report_repo.create(report)
+        saved_report = self.report_repo.create(report)
+        self.notif_service.notify_complaint_submitted(
+            user_id=saved_report.reporter_id,
+            report_id=saved_report.id,
+            description=saved_report.description or saved_report.category,
+        )
+        return saved_report
 
     def get_report(self, report_id: int) -> Report:
         report = self.report_repo.get_by_id(report_id)
@@ -125,6 +133,11 @@ class ReportService:
         self.report_repo.add_status_history(history)
         self.report_repo.update(report)
         self.token_service.award_tokens(report.reporter_id, report_id)
+        
+        # AC1 & AC2: Notify complaint status update and green token award
+        self.notif_service.notify_complaint_status_change(report.reporter_id, report.id, "Verified", reason)
+        new_balance = self.token_service.get_balance(report.reporter_id)
+        self.notif_service.notify_token_awarded(report.reporter_id, 10, new_balance, report.id)
         return report
 
     def reject_report(self, report_id: int, staff_id: int, reason: str) -> Report:
@@ -146,6 +159,7 @@ class ReportService:
         )
         self.report_repo.add_status_history(history)
         self.report_repo.update(report)
+        self.notif_service.notify_complaint_status_change(report.reporter_id, report.id, "Rejected", reason.strip())
         return report
 
     def assign_report(self, report_id: int, staff_id: int, assigned_team: str) -> Report:
@@ -163,6 +177,7 @@ class ReportService:
         )
         self.report_repo.add_status_history(history)
         self.report_repo.update(report)
+        self.notif_service.notify_complaint_status_change(report.reporter_id, report.id, "Assigned", f"Assigned to {assigned_team}")
         return report
 
     def forward_to_admin(self, report_id: int, staff_id: int, staff_role: Optional[str] = None, reason: str = None) -> Report:
@@ -202,6 +217,7 @@ class ReportService:
         )
         self.report_repo.add_status_history(history)
         self.report_repo.update(report)
+        self.notif_service.notify_complaint_status_change(report.reporter_id, report.id, new_status, reason or action_desc)
         return report
 
     def admin_verify(self, report_id: int, admin_id: int, reason: str = None) -> Report:
@@ -233,6 +249,11 @@ class ReportService:
 
         # Award Green Tokens to student
         self.token_service.award_tokens(report.reporter_id, report_id)
+
+        # AC1 & AC2: Notify complaint status update and green token award
+        self.notif_service.notify_complaint_status_change(report.reporter_id, report.id, "Admin Verified", reason)
+        new_balance = self.token_service.get_balance(report.reporter_id)
+        self.notif_service.notify_token_awarded(report.reporter_id, 10, new_balance, report.id)
         return report
 
     def complete_work(self, report_id: int, staff_id: int, staff_role: Optional[str] = None, reason: str = None) -> Report:
@@ -275,6 +296,7 @@ class ReportService:
         )
         self.report_repo.add_status_history(history)
         self.report_repo.update(report)
+        self.notif_service.notify_complaint_status_change(report.reporter_id, report.id, "Work Completed", reason)
         return report
 
     def admin_resolve(self, report_id: int, admin_id: int, reason: str = None) -> Report:
@@ -302,6 +324,7 @@ class ReportService:
         )
         self.report_repo.add_status_history(history)
         self.report_repo.update(report)
+        self.notif_service.notify_complaint_status_change(report.reporter_id, report.id, "Resolved", reason)
         return report
 
     def update_status(self, report_id: int, new_status: str, changed_by_id: int,
@@ -341,7 +364,10 @@ class ReportService:
 
         if new_status in ["Admin Verified", "Verified"]:
             self.token_service.award_tokens(report.reporter_id, report_id)
+            new_balance = self.token_service.get_balance(report.reporter_id)
+            self.notif_service.notify_token_awarded(report.reporter_id, 10, new_balance, report.id)
 
+        self.notif_service.notify_complaint_status_change(report.reporter_id, report.id, new_status, reason)
         return report
 
     def get_status_history(self, report_id: int) -> list[ReportStatusHistory]:
