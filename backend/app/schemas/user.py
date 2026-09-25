@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from app.models.user import ALL_ROLES
 
 
 class UserBase(BaseModel):
@@ -8,10 +9,16 @@ class UserBase(BaseModel):
     email: str
     full_name: str
     role: str = "student"
+    hostel_type: Optional[str] = None
 
 
 class UserCreate(UserBase):
     password: str
+
+    def validate_role(self) -> "UserCreate":
+        if self.role not in ALL_ROLES:
+            raise ValueError(f"Invalid role '{self.role}'. Allowed: {sorted(ALL_ROLES)}")
+        return self
 
 
 class UserResponse(UserBase):

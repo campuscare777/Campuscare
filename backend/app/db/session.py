@@ -22,13 +22,17 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     with engine.connect() as conn:
         inspector = inspect(engine)
+        if "users" in inspector.get_table_names():
+            user_cols = [c["name"] for c in inspector.get_columns("users")]
+            if "hostel_type" not in user_cols:
+                conn.execute(text("ALTER TABLE users ADD COLUMN hostel_type VARCHAR"))
         if "reports" in inspector.get_table_names():
             columns = [c["name"] for c in inspector.get_columns("reports")]
             if "verified_at" not in columns:
                 conn.execute(text("ALTER TABLE reports ADD COLUMN verified_at DATETIME"))
             if "verified_by_id" not in columns:
                 conn.execute(text("ALTER TABLE reports ADD COLUMN verified_by_id INTEGER REFERENCES users(id)"))
-            conn.commit()
+        conn.commit()
 
 
 def get_db():
