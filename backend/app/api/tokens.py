@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.db.session import get_db
-from app.services.auth_service import get_current_user
+from app.services.auth_service import get_current_user, require_roles
 from app.services.token_service import TokenAwardService, RewardRedemptionService
 from app.schemas.token import TokenBalanceResponse, TokenHistoryResponse, FulfillmentLookupResponse
 from app.schemas.reward import (
@@ -13,23 +13,37 @@ from app.schemas.reward import (
     RewardUpdateRequest,
 )
 from app.services.reward_service import RewardCatalogService
-from app.models.user import User
-from app.services.report_service import STAFF_ROLES
+from app.models.user import (
+    User,
+    REWARD_ADMIN_ROLES,
+    REDEMPTION_STAFF_ROLES,
+    ROLE_REDEMPTION_CATEGORY,
+)
 
 router = APIRouter(prefix="/api", tags=["tokens"])
 
-# Roles allowed to manage the reward catalog
-REWARD_ADMIN_ROLES = {"admin", "warden"}
-
 
 def _require_reward_admin(current_user: User) -> None:
-    """Raise 403 if the current user is not an admin or warden."""
+    """Raise 403 if the current user cannot manage the reward catalog."""
     if current_user.role not in REWARD_ADMIN_ROLES:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Access denied: only admin or warden can manage rewards",
         )
 
+
+def _require_redemption_staff(current_user: User) -> None:
+    """Raise 403 if the current user cannot process redemption vouchers.
+
+    AC3 (HOSTELCARE-CROSS-001): canteen, laundry, and hostel store staff
+    may only fulfil vouchers belonging to their own reward category.
+    Warden and admin may fulfil all categories.
+    """
+    if current_user.role not in REDEMPTION_STAFF_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: only redemption staff can process vouchers",
+        )
 
 
 @router.get("/tokens/balance", response_model=TokenBalanceResponse)
@@ -55,10 +69,22 @@ def list_rewards(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Return reward catalog, optionally filtered by category (Canteen / Laundry / Hostel Stores)."""
+    """Return reward catalog, optionally filtered by category.
+
+    AC3: Staff members are automatically scoped to their relevant category.
+    """
     service = RewardCatalogService(db)
-    if category:
-        rewards = service.get_rewards_by_category(category)
+
+    # Staff redemption roles see only their permitted category
+    role_category = ROLE_REDEMPTION_CATEGORY.get(current_user.role)
+    if role_category is not None:
+        # Staff with a fixed category — ignore any client-supplied filter
+        effective_category = role_category
+    else:
+        effective_category = category
+
+    if effective_category:
+        rewards = service.get_rewards_by_category(effective_category)
     else:
         rewards = service.get_all_rewards()
     return [RewardCatalogItemResponse.model_validate(r) for r in rewards]
@@ -78,12 +104,27 @@ def lookup_redemption(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Staff: look up a voucher reference to see reward details before fulfillment."""
-    if current_user.role not in STAFF_ROLES:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=403, detail="Only staff can look up redemption vouchers")
+    """Staff: look up a voucher reference to see reward details before fulfillment.
+
+    AC3: Staff with a fixed redemption category may only look up vouchers
+    belonging to their permitted category.
+    """
+    _require_redemption_staff(current_user)
     service = RewardRedemptionService(db)
     result = service.lookup_redemption(voucher_reference)
+
+    # Enforce category restriction for role-scoped staff
+    allowed_category = ROLE_REDEMPTION_CATEGORY.get(current_user.role)
+    if allowed_category is not None:
+        voucher_category = result.get("reward_category", "")
+        if voucher_category != allowed_category:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    f"Access denied: your role can only process '{allowed_category}' redemptions, "
+                    f"but this voucher is for '{voucher_category}'"
+                ),
+            )
     return FulfillmentLookupResponse(**result)
 
 
@@ -93,11 +134,27 @@ def fulfill_redemption(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Staff: mark a redemption voucher as fulfilled after providing the reward."""
-    if current_user.role not in STAFF_ROLES:
-        from fastapi import HTTPException
-        raise HTTPException(status_code=403, detail="Only staff can fulfill redemption vouchers")
+    """Staff: mark a redemption voucher as fulfilled after providing the reward.
+
+    AC3: Role-scoped staff (canteen / laundry / hostel store) may only
+    fulfil vouchers belonging to their permitted category.
+    """
+    _require_redemption_staff(current_user)
     service = RewardRedemptionService(db)
+
+    # Enforce category restriction
+    allowed_category = ROLE_REDEMPTION_CATEGORY.get(current_user.role)
+    if allowed_category is not None:
+        result = service.lookup_redemption(voucher_reference)
+        voucher_category = result.get("reward_category", "")
+        if voucher_category != allowed_category:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    f"Access denied: your role can only fulfil '{allowed_category}' redemptions, "
+                    f"but this voucher is for '{voucher_category}'"
+                ),
+            )
     return service.fulfill_redemption(voucher_reference, current_user.id)
 
 

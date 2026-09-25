@@ -19,31 +19,33 @@ from app.services.auth_service import hash_password
 from app.models.user import User
 from app.models.reward import RewardCatalogItem
 
+from sqlalchemy.pool import StaticPool
+
 # ─────────────────────────────────────────────────────────────────────────────
 # In-memory SQLite test database setup
 # ─────────────────────────────────────────────────────────────────────────────
-SQLALCHEMY_TEST_URL = "sqlite:///./test_f003_ui004.db"
 
-engine = create_engine(SQLALCHEMY_TEST_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-
-def override_get_db():
-    db = TestingSessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-app.dependency_overrides[get_db] = override_get_db
-
-
-@pytest.fixture(scope="module", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 def setup_db():
     """Create tables, seed test users + one existing reward, then clean up."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     Base.metadata.create_all(bind=engine)
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     db = TestingSessionLocal()
+
+    def override_get_db():
+        session = TestingSessionLocal()
+        try:
+            yield session
+        finally:
+            session.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+
     try:
         # Admin user
         db.add(User(
@@ -93,10 +95,11 @@ def setup_db():
 
     yield
 
+    app.dependency_overrides.clear()
     Base.metadata.drop_all(bind=engine)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def client():
     return TestClient(app)
 

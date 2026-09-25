@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-from app.db.session import engine, Base, SessionLocal
+from app.db.session import engine, Base, SessionLocal, init_db
 from app.models.user import User
 from app.models.report import Report, ReportStatusHistory
 from app.models.token import TokenBalance, TokenTransaction
@@ -14,6 +14,7 @@ import random
 
 
 def seed():
+    init_db()
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
 
@@ -46,7 +47,7 @@ def seed():
                 email="warden1@hostelcare.edu",
                 hashed_password=hash_password("warden123"),
                 full_name="Dr. Ramesh Iyer",
-                role="warden",       # HostelCare warden role
+                role="warden",
             ),
             User(
                 username="maintenance1",
@@ -60,14 +61,36 @@ def seed():
                 email="food1@hostelcare.edu",
                 hashed_password=hash_password("food123"),
                 full_name="Meena Anand",
-                role="food_staff",   # Food/Mess staff role
+                role="food_staff",
+            ),
+            # HOSTELCARE-CROSS-001: redemption-scoped staff roles
+            User(
+                username="canteen_staff1",
+                email="canteen1@hostelcare.edu",
+                hashed_password=hash_password("canteen123"),
+                full_name="Arun Selvam",
+                role="canteen_staff",
+            ),
+            User(
+                username="laundry_staff1",
+                email="laundry1@hostelcare.edu",
+                hashed_password=hash_password("laundry123"),
+                full_name="Sita Lakshmi",
+                role="laundry_staff",
+            ),
+            User(
+                username="hostel_store1",
+                email="hostelstore1@hostelcare.edu",
+                hashed_password=hash_password("store123"),
+                full_name="Ravi Subramaniam",
+                role="hostel_store_staff",
             ),
             User(
                 username="resident1",
                 email="resident1@hostelcare.edu",
                 hashed_password=hash_password("resident123"),
                 full_name="Priya Sharma",
-                role="student",      # Residents are stored as 'student' role in DB
+                role="student",
             ),
             User(
                 username="resident2",

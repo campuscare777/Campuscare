@@ -49,4 +49,28 @@ def get_current_user(
     user = repo.get_by_id(int(user_id))
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive")
     return user
+
+
+def require_roles(*allowed_roles: str):
+    """
+    FastAPI dependency factory that enforces role-based access control.
+
+    Usage::
+
+        @router.get("/protected")
+        def endpoint(user = Depends(require_roles("admin", "warden"))):
+            ...
+
+    Raises HTTP 403 if the authenticated user's role is not in *allowed_roles*.
+    """
+    def _checker(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied: role '{current_user.role}' is not permitted to perform this action",
+            )
+        return current_user
+    return _checker

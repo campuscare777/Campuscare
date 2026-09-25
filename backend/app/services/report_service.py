@@ -5,6 +5,7 @@ from app.models.report import Report, ReportStatusHistory
 from app.repositories.report_repository import ReportRepository
 from app.repositories.user_repository import UserRepository
 from app.services.token_service import TokenAwardService
+from app.models.user import COMPLAINT_STAFF_ROLES
 
 # HostelCare valid status lifecycle
 VALID_STATUSES = [
@@ -21,8 +22,8 @@ VALID_STATUSES = [
     "Duplicate",
 ]
 
-# Roles permitted to update complaint status
-STAFF_ROLES = {"warden", "maintenance", "admin", "food_staff"}
+# Backward-compat alias — use COMPLAINT_STAFF_ROLES directly in new code
+STAFF_ROLES = COMPLAINT_STAFF_ROLES
 
 
 class ReportService:

@@ -509,14 +509,23 @@ function LostAndFoundPage() {
 function Sidebar({ currentPage, onNavigate }) {
   const { user, logout } = useAuth();
   const isStudent = user?.role === 'student';
-  const isStaff = ['warden', 'maintenance', 'admin', 'food_staff'].includes(user?.role);
+  const isComplaintStaff = ['warden', 'maintenance', 'admin', 'food_staff'].includes(user?.role);
+  const isRedemptionStaff = [
+    'canteen_staff',
+    'laundry_staff',
+    'hostel_store_staff',
+    'food_staff',
+    'maintenance',
+    'warden',
+    'admin',
+  ].includes(user?.role);
   const isRewardAdmin = ['admin', 'warden'].includes(user?.role);
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'reports', label: 'Hostel Complaints', icon: FileText },
+    ...(isStudent || isComplaintStaff ? [{ id: 'reports', label: 'Hostel Complaints', icon: FileText }] : []),
     { id: 'lost-and-found', label: 'Lost & Found', icon: Package },
     ...(isStudent ? [{ id: 'tokens', label: 'Green Tokens', icon: Coins }] : []),
-    ...(isStaff ? [{ id: 'redemptions', label: 'Redemption Verification', icon: Ticket }] : []),
+    ...(isRedemptionStaff ? [{ id: 'redemptions', label: 'Redemption Verification', icon: Ticket }] : []),
     ...(isRewardAdmin ? [{ id: 'reward-management', label: 'Reward Catalog', icon: Gift }] : []),
   ];
 

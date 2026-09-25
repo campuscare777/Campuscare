@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 
 from app.models.lost_and_found import LostAndFoundItemReport, LostAndFoundStatusHistory, LostAndFoundClaim
-from app.models.user import User
+from app.models.user import User, COMPLAINT_STAFF_ROLES
 from app.repositories.lost_and_found_repository import LostAndFoundRepository
 from app.schemas.lost_and_found import LostAndFoundCreate, LostAndFoundStatusUpdate, LostAndFoundUpdate
 
@@ -21,7 +21,7 @@ ALLOWED_STATUSES = {
     "Rejected",
 }
 
-STAFF_ROLES = ["admin", "warden", "staff", "hostel_staff", "maintenance", "food_staff"]
+STAFF_ROLES = list(COMPLAINT_STAFF_ROLES)
 
 
 class LostAndFoundService:
