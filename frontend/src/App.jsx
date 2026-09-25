@@ -52,6 +52,7 @@ import {
 import { authAPI, reportsAPI, tokensAPI, rewardsAPI, dashboardAPI } from './api';
 import MaintenanceReportForm from './MaintenanceReportForm';
 import MissingItemReportForm from './MissingItemReportForm';
+import FoundItemReportForm from './FoundItemReportForm';
 import StaffReportsQueue from './StaffReportsQueue';
 import StudentReportsView from './StudentReportsView';
 import RedemptionVerification from './RedemptionVerification';
@@ -400,6 +401,7 @@ function ReportsPage() {
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [showMissingForm, setShowMissingForm] = useState(false);
+  const [showFoundForm, setShowFoundForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const isMaintenance = ['warden', 'food_staff', 'maintenance', 'admin'].includes(user?.role);
@@ -412,7 +414,19 @@ function ReportsPage() {
     return (
       <MissingItemReportForm
         onCancel={() => setShowMissingForm(false)}
-        onSuccess={() => {}}
+        onSuccess={() => setShowMissingForm(false)}
+      />
+    );
+  }
+
+  if (showFoundForm) {
+    return (
+      <FoundItemReportForm
+        onCancel={() => setShowFoundForm(false)}
+        onSuccess={() => {
+          setShowFoundForm(false);
+          setRefreshKey((k) => k + 1);
+        }}
       />
     );
   }
@@ -428,6 +442,14 @@ function ReportsPage() {
         }}
       >
         <button
+          id="report-found-item-btn"
+          onClick={() => setShowFoundForm(true)}
+          className="btn btn-outline"
+        >
+          Report Found Item
+        </button>
+        <button
+          id="report-missing-item-btn"
           onClick={() => setShowMissingForm(true)}
           className="btn btn-primary"
         >
@@ -758,7 +780,7 @@ function TokensPage() {
                   <h4 style={{ color: 'var(--text-main)', fontSize: 17, fontWeight: 800, margin: '0 0 6px' }}>{r.name}</h4>
                   {r.provider_location && (
                     <div style={{ color: '#059669', fontSize: 12, fontWeight: 600, marginBottom: 8 }}>
-                      =ƒτμ {r.provider_location}
+                      π“ {r.provider_location}
                     </div>
                   )}
                   <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: '0 0 20px', lineHeight: 1.6 }}>{r.description}</p>
