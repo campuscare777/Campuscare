@@ -184,32 +184,60 @@ function LoginPage() {
         </form>
 
         <div style={{
-          marginTop: 32,
-          padding: '18px 20px',
+          marginTop: 28,
+          padding: '16px 18px',
           background: '#f8fafc',
           borderRadius: 14,
           border: '1px solid #e2e8f0'
         }}>
-          <div style={{ color: 'var(--text-subtle)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>
-            Demo Accounts
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <span style={{ color: 'var(--text-subtle)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+              Quick Demo Logins (Click to fill)
+            </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 12 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: 600 }}>admin / admin123</span>
-              <span className="badge badge-purple">Admin</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: 600 }}>warden1 / warden123</span>
-              <span className="badge badge-blue">Warden</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: 600 }}>food_staff1 / food123</span>
-              <span className="badge badge-amber">Food Staff</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'var(--text-main)', fontFamily: 'monospace', fontWeight: 600 }}>resident1 / resident123</span>
-              <span className="badge badge-emerald">Resident</span>
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontSize: 11 }}>
+            {[
+              { u: 'admin', p: 'admin123', label: 'Admin', badge: 'badge-purple' },
+              { u: 'warden1', p: 'warden123', label: 'Warden', badge: 'badge-blue' },
+              { u: 'maintenance1', p: 'maint123', label: 'Maintenance', badge: 'badge-amber' },
+              { u: 'food_staff1', p: 'food123', label: 'Food/Mess', badge: 'badge-amber' },
+              { u: 'canteen_staff1', p: 'canteen123', label: 'Canteen', badge: 'badge-emerald' },
+              { u: 'laundry_staff1', p: 'laundry123', label: 'Laundry', badge: 'badge-blue' },
+              { u: 'hostel_store1', p: 'store123', label: 'Hostel Store', badge: 'badge-purple' },
+              { u: 'resident1', p: 'resident123', label: 'Resident', badge: 'badge-emerald' },
+            ].map((item) => (
+              <button
+                key={item.u}
+                type="button"
+                onClick={() => {
+                  setUsername(item.u);
+                  setPassword(item.p);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '6px 10px',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#10b981';
+                  e.currentTarget.style.background = '#ecfdf5';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#e2e8f0';
+                  e.currentTarget.style.background = '#ffffff';
+                }}
+              >
+                <span style={{ fontWeight: 600, color: 'var(--text-main)', fontFamily: 'monospace' }}>{item.u}</span>
+                <span className={`badge ${item.badge}`} style={{ fontSize: 9, padding: '2px 6px' }}>{item.label}</span>
+              </button>
+            ))}
           </div>
         </div>
       </div>
